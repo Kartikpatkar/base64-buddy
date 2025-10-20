@@ -1,0 +1,132 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Base64 Buddy</title>
+    <link rel="stylesheet" href="index.css">
+</head>
+
+<body>
+    <div id="successMessage" class="toast"></div>
+    <div id="errorMessage" class="toast"></div>
+    <div class="container">
+        <label class="theme-toggle">
+            <input type="checkbox" id="themeSwitch">
+            <span>🌙</span>
+        </label>
+
+        <header class="header">
+            <h1>Base64 Buddy</h1>
+            <p>Encode and decode files with ease</p>
+        </header>
+
+        <div class="main-card">
+            <!-- Tabs -->
+            <nav class="tabs">
+                <button class="tab-button active" data-tab="encode"> 📤 Encode </button>
+                <button class="tab-button" data-tab="decode"> 📥 Decode </button>
+                <button class="tab-button" data-tab="history"> 📋 History </button>
+            </nav>
+
+            <!-- Encode Section -->
+            <section id="encodeSection" class="section active">
+                <div id="encodeDrop" class="drop-zone">
+                    <span class="drop-zone-icon">📁</span>
+                    <div class="drop-zone-text">Click or drop file here to encode</div>
+                    <div class="drop-zone-subtext">Supports images, documents, and more</div>
+                </div>
+                <input type="file" id="fileInput" hidden>
+
+                <div class="form-group">
+                    <label class="form-label" for="base64Output">Base64 Output</label>
+                    <div class="textarea-wrapper">
+                        <textarea id="base64Output" placeholder="Base64 output..."></textarea>
+                        <button class="copy-btn" id="copyBase64" title="Copy Base64">📋
+                            <span class="tooltip">Copy Base64</span>
+                        </button>
+                    </div>
+                </div>
+
+                <div class="preview" id="preview">
+                    <div class="preview-placeholder">File preview will appear here</div>
+                </div>
+
+                <div class="form-group checkbox-group">
+                    <label>
+                        <input type="checkbox" id="includeDataUri">
+                        Add Data URI prefix (e.g. data:image/png;base64,)
+                    </label>
+                </div>
+
+                <div class="actions">
+                    <button id="copyBase64" class="btn">
+                        Copy Base64
+                    </button>
+                    <button id="downloadBase64" class="btn btn-secondary">
+                        Download
+                    </button>
+                </div>
+            </section>
+
+            <!-- Decode Section -->
+            <section id="decodeSection" class="section">
+                <div id="decodeDrop" class="drop-zone">
+                    <span class="drop-zone-icon">📄</span>
+                    <div class="drop-zone-text">Click or drop text file with Base64</div>
+                    <div class="drop-zone-subtext">Or paste Base64 content below</div>
+                </div>
+                <!-- <input type="file" id="fileInput" hidden> -->
+
+                <div class="form-group">
+                    <label class="form-label" for="base64Input">Base64 Input</label>
+                    <div class="textarea-wrapper">
+                        <textarea id="base64Input" placeholder="Paste Base64 here..."></textarea>
+                        <button class="copy-btn" id="copyDecoded">
+                            📋
+                            <span class="tooltip">Copy Decoded</span>
+                        </button>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="filename">Output Filename (optional)</label>
+                    <input type="text" id="filename" placeholder="e.g., decoded-file.jpg">
+                </div>
+
+                <div class="preview" id="decodedPreview">
+                    <div class="preview-placeholder">Decoded content preview will appear here</div>
+                </div>
+
+                <div class="form-group checkbox-group">
+                    <label>
+                        <input type="checkbox" id="decodeHasDataUri">
+                        Input already contains Data URI prefix
+                    </label>
+                </div>
+
+                <div class="actions">
+                    <button id="decodeButton" class="btn">
+                        Decode & Download
+                    </button>
+                </div>
+            </section>
+
+            <!-- History Section -->
+            <section id="historySection" class="section">
+                <div class="actions" style="margin-bottom: 30px;">
+                    <button id="clearHistory" class="btn btn-danger">Clear History</button>
+                </div>
+                <div id="historyList">
+                    <div class="preview-placeholder">No history items yet</div>
+                </div>
+            </section>
+        </div>
+    </div>
+
+    <script src="../utils/base64.js"></script>
+    <script src="index.js"></script>
+</body>
+
+</html>
