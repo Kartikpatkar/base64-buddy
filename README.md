@@ -46,13 +46,14 @@ No more hunting down SVGs, guessing `icon-name`s, or fiddling with styling. With
 
 ### 🔷 Light Mode
 
-![Light Mode - Icon Browser](./assets/screenshots/icon-browser-light.png)
-![Light Mode - Icon Details](./assets/screenshots/icon-details-light.png)
+![Light Mode - Icon Browser](./assets/base64-buddy-encode.png)
+![Light Mode - Icon Browser](./assets/base64-buddy-encode-file.png)
+![Light Mode - Icon Details](./assets/base64-buddy-decode-view.png)
+![Light Mode - Icon Details](./assets/base64-buddy-history-view.png)
 
 ### 🌑 Dark Mode
 
-![Dark Mode - Icon Browser](./assets/screenshots/icon-browser-dark.png)
-![Dark Mode - Code Customizer](./assets/screenshots/code-customizer-dark.png)
+![Dark Mode - Icon Browser](./assets/base64-buddy-dark-theme-view.png)
 
 ---
 
