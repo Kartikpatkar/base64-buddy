@@ -6,6 +6,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Base64 Buddy</title>
     <link rel="stylesheet" href="index.css">
+    <!-- Add Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
 
 <body>
@@ -43,31 +45,47 @@
                     <label class="form-label" for="base64Output">Base64 Output</label>
                     <div class="textarea-wrapper">
                         <textarea id="base64Output" placeholder="Base64 output..."></textarea>
-                        <button class="copy-btn" id="copyBase64" title="Copy Base64">📋
-                            <span class="tooltip">Copy Base64</span>
-                        </button>
+                        <div class="floating-buttons">
+                            <button id="dataUriToggle" class="copy-btn" title="Toggle Data URI">
+                                🖇️
+                                <span class="tooltip">Add Data URI</span>
+                            </button>
+                            <button id="copyEncoded" class="copy-btn" title="Copy Base64">
+                                📋
+                                <span class="tooltip">Copy Base64</span>
+                            </button>
+                        </div>
+
+                    </div>
+
+                </div>
+
+                <div class="preview-container">
+                    <!-- Left: Preview -->
+                    <div class="preview-side" id="preview">
+                        <h4 class="preview-header">Preview</h4>
+                        <div class="preview-content">
+                            <div class="preview-placeholder">File preview will appear here</div>
+                        </div>
+                    </div>
+
+                    <!-- Right: File Info -->
+                    <div class="file-info-side" id="fileInfo" style="display: none;">
+                        <h4 class="preview-header">File Info</h4>
+                        <ul>
+                            <li><strong>Filename:</strong> <span id="fileName">-</span></li>
+                            <li><strong>Type:</strong> <span id="fileType">-</span></li>
+                            <li><strong>Extension:</strong> <span id="fileExtension">-</span></li>
+                            <li><strong>Size:</strong> <span id="fileSizeEncode">-</span></li>
+                            <li><strong>Resolution:</strong> <span id="fileResolutionEncode">-</span></li>
+                            <li><strong>Bit depth:</strong> <span id="fileBitDepthEncode">-</span></li>
+                        </ul>
                     </div>
                 </div>
-
-                <div class="preview" id="preview">
-                    <div class="preview-placeholder">File preview will appear here</div>
-                </div>
-
-                <div class="form-group checkbox-group">
-                    <label>
-                        <input type="checkbox" id="includeDataUri">
-                        Add Data URI prefix (e.g. data:image/png;base64,)
-                    </label>
-                </div>
-
                 <div class="actions">
-                    <button id="copyBase64" class="btn">
-                        Copy Base64
-                    </button>
-                    <button id="downloadBase64" class="btn btn-secondary">
-                        Download
-                    </button>
+                    <button id="clearEncode" class="btn btn-danger">Clear Data</button>
                 </div>
+
             </section>
 
             <!-- Decode Section -->
@@ -83,10 +101,16 @@
                     <label class="form-label" for="base64Input">Base64 Input</label>
                     <div class="textarea-wrapper">
                         <textarea id="base64Input" placeholder="Paste Base64 here..."></textarea>
-                        <button class="copy-btn" id="copyDecoded">
-                            📋
-                            <span class="tooltip">Copy Decoded</span>
-                        </button>
+                        <div class="floating-buttons">
+                            <button id="decodeDataUriToggle" class="copy-btn" title="Toggle Data URI">
+                                🖇️
+                                <span class="tooltip">Add Data URI</span>
+                            </button>
+                            <button class="copy-btn" id="copyDecoded">
+                                📋
+                                <span class="tooltip">Copy Decoded</span>
+                            </button>
+                        </div>
                     </div>
                 </div>
 
@@ -95,21 +119,35 @@
                     <input type="text" id="filename" placeholder="e.g., decoded-file.jpg">
                 </div>
 
-                <div class="preview" id="decodedPreview">
-                    <div class="preview-placeholder">Decoded content preview will appear here</div>
+                <div class="preview-container">
+                    <!-- Left: Preview -->
+                    <div class="preview-side" id="decodedPreview">
+                        <h4 class="preview-header">Preview</h4>
+                        <div class="preview-content">
+                            <div class="preview-placeholder">Decoded content preview will appear here</div>
+                        </div>
+                    </div>
+
+                    <!-- Right: File Info -->
+                    <div class="file-info-side" id="decodedFileInfo" style="display: none;">
+                        <h4 class="preview-header">File Info</h4>
+                        <ul>
+                            <li><strong>Resolution:</strong> <span id="fileResolution">-</span></li>
+                            <li><strong>MIME type:</strong> <span id="fileMimeType">-</span></li>
+                            <li><strong>Extension:</strong> <span id="fileExtension">-</span></li>
+                            <li><strong>Size:</strong> <span id="fileSize">-</span></li>
+                            <li><strong>Download:</strong> <a href="#" id="fileDownloadLink" download>-</a></li>
+                            <li><strong>Bit depth:</strong> <span id="fileBitDepth">-</span></li>
+                        </ul>
+                    </div>
                 </div>
 
-                <div class="form-group checkbox-group">
-                    <label>
-                        <input type="checkbox" id="decodeHasDataUri">
-                        Input already contains Data URI prefix
-                    </label>
-                </div>
 
                 <div class="actions">
                     <button id="decodeButton" class="btn">
-                        Decode & Download
+                        Download
                     </button>
+                    <button id="clearDecode" class="btn btn-danger">Clear Data</button>
                 </div>
             </section>
 
@@ -125,8 +163,51 @@
         </div>
     </div>
 
+    <!-- Footer starts here -->
+    <footer class="footer">
+        <div class="footer-content">
+
+            <!-- Website name or logo -->
+            <div class="footer-logo" id="footerTitle">YourWebsite</div>
+
+            <!-- Short description or tagline -->
+            <p class="footer-text" id="tagline">A modern tool for encoding and decoding files seamlessly.</p>
+
+            <!-- Author name and credit -->
+            <div class="footer-info-row">
+                <div class="footer-author">
+                    <i class="fas fa-code"></i> Created with ❤️ by <span id="authorDisplay">Kartik Patkar</span>
+                </div>
+            </div>
+
+            <!-- Social media and contact links -->
+            <div class="footer-links">
+                <a href="https://github.com/yourusername" class="footer-link github" target="_blank">
+                    <i class="fab fa-github"></i> GitHub
+                </a>
+                <a href="https://linkedin.com/in/yourprofile" class="footer-link linkedin" target="_blank">
+                    <i class="fab fa-linkedin"></i> LinkedIn
+                </a>
+                <a href="https://trailhead.salesforce.com/" class="footer-link trailhead" target="_blank">
+                    <i class="fab fa-salesforce"></i> Trailhead
+                </a>
+                <a href="mailto:youremail@example.com" class="footer-link email">
+                    <i class="fas fa-envelope"></i> Email
+                </a>
+            </div>
+
+            <!-- Horizontal divider line -->
+            <div class="footer-divider"></div>
+
+            <!-- Copyright text -->
+            <div class="footer-copyright">
+                © <span id="currentYear"></span> <span id="copyright">YourWebsite</span>
+            </div>
+        </div>
+    </footer>
+
     <script src="../utils/base64.js"></script>
-    <script src="index.js"></script>
+    <script type="module" src="index.js"></script>
 </body>
 
 </html>

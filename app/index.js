@@ -1,3 +1,4 @@
+import * as CONSTANTS from '../utils/constants.js';
 // -------------------------------
 // State
 // -------------------------------
@@ -12,9 +13,21 @@ document.addEventListener('DOMContentLoaded', () => {
     initTheme();
     initFileHandling();
     loadHistory();
+    initFloatingButtons();
+    initClearButtons();
 
-    // Delay floating button init to ensure DOM is ready
-    setTimeout(initFloatingButtons, 100);
+    // Paste handler for decode textarea
+    const base64Input = document.getElementById('base64Input');
+    if (base64Input) {
+        base64Input.addEventListener('paste', e => {
+            setTimeout(() => {
+                updateDecodePreview();
+                updateFloatingButton('base64Input', 'copyDecoded');
+            }, 100);
+        });
+    }
+    document.getElementById('currentYear').textContent = new Date().getFullYear();
+    initFooter();
 });
 
 // -------------------------------
@@ -75,51 +88,86 @@ function initFileHandling() {
     decodeDrop.addEventListener('click', () => openDecodeFile());
 
     fileInput.addEventListener('change', e => processFile(e.target.files[0]));
-
-    document.getElementById('copyBase64').addEventListener('click', copyBase64);
-    document.getElementById('downloadBase64').addEventListener('click', downloadBase64);
     document.getElementById('decodeButton').addEventListener('click', decodeBase64);
     document.getElementById('clearHistory').addEventListener('click', clearHistory);
 }
 
+// -------------------------------
+// Floating Buttons
+// -------------------------------
 function initFloatingButtons() {
-    const pairs = [
-        { textarea: 'base64Output', button: 'copyEncoded' },
-        { textarea: 'base64Input', button: 'copyDecoded' }
-    ];
+    const encodeTextarea = document.getElementById('base64Output');
+    const copyEncodedBtn = document.getElementById('copyEncoded');
+    const dataUriToggle = document.getElementById('dataUriToggle');
 
-    pairs.forEach(({ textarea: tId, button: bId }) => {
-        const textarea = document.getElementById(tId);
-        const button = document.getElementById(bId);
+    // Data URI Toggle for Encode
+    dataUriToggle.dataset.active = 'false';
+    dataUriToggle.addEventListener('click', () => {
+        const isActive = dataUriToggle.dataset.active === 'true';
+        dataUriToggle.dataset.active = (!isActive).toString();
+        dataUriToggle.classList.toggle('active', !isActive);
+        showToast(`Data URI ${!isActive ? 'enabled' : 'disabled'}`, 'info');
 
-        if (!textarea || !button) return;
+        // Update output if a file is already loaded
+        if (currentFile) processFile(currentFile);
+    });
 
-        // Show/hide button when content changes
-        const toggleButton = () => {
-            button.style.display = textarea.value.trim() ? 'block' : 'none';
-        };
+    setupFloatingButton(encodeTextarea, copyEncodedBtn);
 
-        textarea.addEventListener('input', toggleButton);
-        toggleButton(); // initial check
+    // -------------------------------
+    // Decode section
+    const decodeTextarea = document.getElementById('base64Input');
+    const copyDecodedBtn = document.getElementById('copyDecoded');
 
-        // Copy functionality
-        button.addEventListener('click', () => {
-            if (!textarea.value) return;
-            navigator.clipboard.writeText(textarea.value)
-                .then(() => showToast('Copied to clipboard!', 'success'))
-                .catch(() => showToast('Copy failed', 'error'));
-        });
+    const decodeUriToggle = document.getElementById('decodeDataUriToggle');
+    decodeUriToggle.dataset.active = 'false';
+    decodeUriToggle.addEventListener('click', () => {
+        const isActive = decodeUriToggle.dataset.active === 'true';
+        decodeUriToggle.dataset.active = (!isActive).toString();
+        decodeUriToggle.classList.toggle('active', !isActive);
+        showToast(`Data URI ${!isActive ? 'enabled' : 'disabled'}`, 'info');
+
+        const textarea = document.getElementById('base64Input');
+        if (!textarea.value.trim()) return;
+
+        let val = textarea.value.trim();
+
+        if (!isActive) {
+            if (!val.startsWith('data:')) val = `data:image/jpeg;base64,${val}`;
+        } else {
+            if (val.startsWith('data:')) val = val.split(',')[1];
+        }
+
+        textarea.value = val;
+        updateFloatingButton('base64Input', 'copyDecoded');
+    });
+
+
+    setupFloatingButton(decodeTextarea, copyDecodedBtn);
+}
+
+// Generic floating copy button
+function setupFloatingButton(textarea, button) {
+    const toggleButton = () => {
+        button.style.display = textarea.value.trim() ? 'block' : 'none';
+    };
+    textarea.addEventListener('input', () => {
+        toggleButton();
+        if (textarea.id === 'base64Input') updateDecodePreview();
+    });
+    toggleButton();
+
+    button.addEventListener('click', () => {
+        if (!textarea.value) return;
+        navigator.clipboard.writeText(textarea.value)
+            .then(() => showToast('Copied to clipboard!', 'success'))
+            .catch(() => showToast('Copy failed', 'error'));
     });
 }
 
-function updateFloatingButton(textareaId, buttonId) {
-    const textarea = document.getElementById(textareaId);
-    const button = document.getElementById(buttonId);
-    if (!textarea || !button) return;
-
-    button.style.display = textarea.value.trim() ? 'block' : 'none';
-}
-
+// -------------------------------
+// Drag & Drop Handlers
+// -------------------------------
 function dragOver(e) {
     e.preventDefault();
     e.currentTarget.classList.add('dragover');
@@ -141,7 +189,11 @@ function decodeDropFile(e) {
     e.currentTarget.classList.remove('dragover');
     if (e.dataTransfer.files.length) {
         const reader = new FileReader();
-        reader.onload = (ev) => document.getElementById('base64Input').value = ev.target.result;
+        reader.onload = (ev) => {
+            document.getElementById('base64Input').value = ev.target.result;
+            updateFloatingButton('base64Input', 'copyDecoded');
+            updateDecodePreview();
+        };
         reader.readAsText(e.dataTransfer.files[0]);
     }
 }
@@ -156,6 +208,8 @@ function openDecodeFile() {
             const reader = new FileReader();
             reader.onload = ev => {
                 document.getElementById('base64Input').value = ev.target.result;
+                updateFloatingButton('base64Input', 'copyDecoded');
+                updateDecodePreview();
             };
             reader.readAsText(file);
         }
@@ -163,35 +217,41 @@ function openDecodeFile() {
     input.click();
 }
 
-document.getElementById('base64Input').addEventListener('paste', e => {
-    setTimeout(() => {
-        const val = e.target.value.trim();
-        if (val.startsWith('data:image/')) showDecodedPreview(val, 'Preview');
-        updateFloatingButton('base64Input', 'copyDecoded');
-    }, 100);
-});
+// Paste handler for decode textarea
+// document.getElementById('base64Input').addEventListener('paste', e => {
+//     setTimeout(() => {
+//         updateDecodePreview();
+//         updateFloatingButton('base64Input', 'copyDecoded');
+//     }, 100);
+// });
 
 // -------------------------------
 // Encode File
 // -------------------------------
 function processFile(file) {
     if (!file) return;
-
     currentFile = file;
-    const includeDataUri = document.getElementById('includeDataUri').checked;
 
-    encodeFileToBase64(file).then(base64 => {
-        let output = base64;
-        if (includeDataUri && file.type) {
-            output = `data:${file.type};base64,${base64}`;
+    const dataUriToggle = document.getElementById('dataUriToggle');
+    const includeDataUri = dataUriToggle.dataset.active === 'true';
+
+    encodeFileToBase64(file).then(base64WithUri => {
+        let output = base64WithUri;
+
+        if (!includeDataUri && base64WithUri.startsWith('data:')) {
+            // Strip Data URI prefix
+            output = base64WithUri.split(',')[1];
         }
 
         document.getElementById('base64Output').value = output;
-        showPreview(file, output);
+        showPreview(file, base64WithUri);
         addToHistory('encode', file.name, output);
         updateFloatingButton('base64Output', 'copyEncoded');
         showToast('File encoded successfully!', 'success');
-    }).catch(() => showToast('Error encoding file', 'error'));
+    }).catch((error) => {
+        console.error(error);
+        showToast('Error encoding file', 'error')
+    });
 }
 
 // -------------------------------
@@ -199,16 +259,44 @@ function processFile(file) {
 // -------------------------------
 function showPreview(file, base64) {
     const preview = document.getElementById('preview');
+    const fileInfo = document.getElementById('fileInfo');
+
+    const previewContent = preview.querySelector('.preview-content');
+    previewContent.innerHTML = ''; // clear old preview
+
+    const extension = file.name.split('.').pop() || 'bin';
+
     if (file.type.startsWith('image/')) {
-        preview.innerHTML = `<img src="${base64}" alt="Preview">`;
+        const img = new Image();
+        img.src = base64;
+        img.alt = 'Preview';
+        img.onload = () => {
+            previewContent.appendChild(img);
+
+            // Show file info
+            document.getElementById('fileName').textContent = file.name;
+            document.getElementById('fileType').textContent = file.type;
+            document.getElementById('fileExtension').textContent = extension;
+            document.getElementById('fileSizeEncode').textContent = formatFileSize(file.size);
+            document.getElementById('fileResolutionEncode').textContent = `${img.naturalWidth}×${img.naturalHeight}`;
+            document.getElementById('fileBitDepthEncode').textContent = 8; // assuming 8-bit per channel
+            fileInfo.style.display = 'block';
+        };
     } else {
-        preview.innerHTML = `
-            <div style="text-align: center;">
-                <div style="font-size: 2rem; margin-bottom: 10px;">📄</div>
-                <div><strong>${file.name}</strong></div>
-                <div style="color: #64748b; font-size: 0.9rem;">${formatFileSize(file.size)}</div>
-            </div>
+        // Non-image file
+        previewContent.innerHTML = `
+            <div style="text-align: center; font-size: 2rem;">📄</div>
+            <div style="text-align: center;"><strong>${file.name}</strong></div>
+            <div style="text-align: center; color: #64748b;">${formatFileSize(file.size)}</div>
         `;
+
+        document.getElementById('fileName').textContent = file.name;
+        document.getElementById('fileType').textContent = file.type || 'application/octet-stream';
+        document.getElementById('fileExtension').textContent = extension;
+        document.getElementById('fileSizeEncode').textContent = formatFileSize(file.size);
+        document.getElementById('fileResolutionEncode').textContent = '-';
+        document.getElementById('fileBitDepthEncode').textContent = '-';
+        fileInfo.style.display = 'block';
     }
 }
 
@@ -246,18 +334,37 @@ function downloadBase64() {
 function decodeBase64() {
     let input = document.getElementById('base64Input').value.trim();
     const filenameInput = document.getElementById('filename').value || 'decoded-file';
-    const hasDataUri = document.getElementById('decodeHasDataUri').checked;
+    const decodeUriToggle = document.getElementById('decodeDataUriToggle');
+    const includeDataUri = decodeUriToggle.dataset.active === 'true';
 
     if (!input) return showToast('Please enter Base64 content', 'error');
 
     try {
-        if (hasDataUri && input.includes(',')) {
-            input = input.split(',')[1]; // strip data:image/...;base64,
+        let base64Str = input;
+
+        // Strip Data URI prefix if toggle is OFF
+        if (!includeDataUri && base64Str.includes(',')) {
+            base64Str = base64Str.split(',')[1];
         }
 
-        const blob = decodeBase64ToBlob(input);
-        showDecodedPreview(input, filenameInput);
+        // Determine MIME type for preview
+        let mime = 'application/octet-stream';
+        if (input.startsWith('data:')) {
+            mime = input.split(':')[1].split(';')[0];
+        } else if (/^(?:[A-Za-z0-9+/]{4})*(?:[A-Za-z0-9+/]{2}==|[A-Za-z0-9+/]{3}=)?$/.test(base64Str)) {
+            // crude image type detection for preview
+            mime = 'image/jpeg';
+        }
 
+        // Always pass proper Data URI to preview
+        const previewBase64 = base64Str.startsWith('data:')
+            ? base64Str
+            : `data:${mime};base64,${base64Str}`;
+
+        showDecodedPreview(previewBase64, filenameInput);
+
+        // Blob for download
+        const blob = decodeBase64ToBlob(previewBase64);
         const url = URL.createObjectURL(blob);
         const a = document.createElement('a');
         a.href = url;
@@ -273,20 +380,98 @@ function decodeBase64() {
     }
 }
 
+// -------------------------------
+// Decode Preview + File Info
+// -------------------------------
 function showDecodedPreview(base64, filename) {
     const preview = document.getElementById('decodedPreview');
-    if (base64.startsWith('data:image/')) {
-        preview.innerHTML = `<img src="${base64}" alt="Decoded Preview">`;
+    const fileInfo = document.getElementById('decodedFileInfo');
+
+    // Only target .preview-content, don't overwrite preview container
+    const previewContent = preview.querySelector('.preview-content');
+    previewContent.innerHTML = ''; // now safe
+
+    const mimeType = base64.startsWith('data:') ? base64.split(':')[1].split(';')[0] : 'application/octet-stream';
+    const extension = mimeType.split('/')[1] || 'bin';
+
+    const blob = decodeBase64ToBlob(base64);
+    const size = formatFileSize(blob.size);
+
+    if (mimeType.startsWith('image/')) {
+        const img = new Image();
+        img.onload = () => {
+            previewContent.appendChild(img);
+
+            // Show file info
+            document.getElementById('fileResolution').textContent = `${img.naturalWidth}×${img.naturalHeight}`;
+            document.getElementById('fileMimeType').textContent = mimeType;
+            document.getElementById('fileExtension').textContent = extension;
+            document.getElementById('fileSize').textContent = size;
+            document.getElementById('fileDownloadLink').href = URL.createObjectURL(blob);
+            document.getElementById('fileDownloadLink').download = filename;
+            document.getElementById('fileDownloadLink').textContent = filename;
+            document.getElementById('fileBitDepth').textContent = 8;
+            fileInfo.style.display = 'block';
+        };
+        img.src = base64;
+        img.alt = 'Decoded Preview';
     } else {
-        preview.innerHTML = `
-            <div style="text-align: center;">
-                <div style="font-size: 2rem; margin-bottom: 10px;">✅</div>
-                <div><strong>${filename}</strong></div>
-                <div style="color: #64748b; font-size: 0.9rem;">Ready to download</div>
-            </div>
+        previewContent.innerHTML = `
+            <div style="font-size: 2rem; text-align: center;">📄</div>
+            <div style="text-align: center;"><strong>${filename}</strong></div>
+            <div style="text-align: center;">Ready to download</div>
         `;
+
+        document.getElementById('fileResolution').textContent = '-';
+        document.getElementById('fileMimeType').textContent = mimeType;
+        document.getElementById('fileExtension').textContent = extension;
+        document.getElementById('fileSize').textContent = size;
+        document.getElementById('fileDownloadLink').href = URL.createObjectURL(blob);
+        document.getElementById('fileDownloadLink').download = filename;
+        document.getElementById('fileDownloadLink').textContent = filename;
+        document.getElementById('fileBitDepth').textContent = '-';
+        fileInfo.style.display = 'block';
     }
 }
+
+
+
+
+// -------------------------------
+// Decode Base64 to Blob
+// -------------------------------
+function decodeBase64ToBlob(base64) {
+    const parts = base64.split(',');
+    const b64 = parts.length > 1 ? parts[1] : parts[0];
+    const mime = parts.length > 1 ? parts[0].match(/data:(.*);base64/)[1] : 'application/octet-stream';
+    const byteCharacters = atob(b64);
+    const byteNumbers = new Array(byteCharacters.length);
+
+    for (let i = 0; i < byteCharacters.length; i++) {
+        byteNumbers[i] = byteCharacters.charCodeAt(i);
+    }
+
+    const byteArray = new Uint8Array(byteNumbers);
+    return new Blob([byteArray], { type: mime });
+}
+
+
+function updateDecodePreview() {
+    const textarea = document.getElementById('base64Input');
+    const val = textarea.value.trim();
+    const preview = document.getElementById('decodedPreview');
+
+    if (!val) {
+        preview.innerHTML = '<div class="preview-placeholder">Decoded content preview will appear here</div>';
+        return;
+    }
+
+    // Always construct a Data URI for preview
+    let previewBase64 = val.startsWith('data:') ? val : `data:image/jpeg;base64,${val.includes(',') ? val.split(',')[1] : val}`;
+
+    showDecodedPreview(previewBase64, 'Preview');
+}
+
 
 // -------------------------------
 // History
@@ -330,7 +515,7 @@ function clearHistory() {
 }
 
 // -------------------------------
-// Toast Notifications (New)
+// Toast Notifications
 // -------------------------------
 function showToast(message, type = 'info') {
     const container = document.querySelector('.toast-container') || createToastContainer();
@@ -339,7 +524,6 @@ function showToast(message, type = 'info') {
     toast.innerHTML = `<span>${message}</span>`;
     container.appendChild(toast);
 
-    // Auto remove after animation
     setTimeout(() => {
         toast.remove();
     }, 3000);
@@ -361,4 +545,81 @@ function formatFileSize(bytes) {
     const sizes = ['B', 'KB', 'MB', 'GB'];
     const i = Math.floor(Math.log(bytes) / Math.log(k));
     return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+}
+
+function updateFloatingButton(textareaId, buttonId) {
+    const textarea = document.getElementById(textareaId);
+    const button = document.getElementById(buttonId);
+    if (!textarea || !button) return;
+    button.style.display = textarea.value.trim() ? 'block' : 'none';
+}
+
+
+// -------------------
+// Clear Data Buttons
+// -------------------
+function initClearButtons() {
+
+    const clearEncodeBtn = document.getElementById('clearEncode');
+    if (clearEncodeBtn) {
+        clearEncodeBtn.addEventListener('click', () => {
+            currentFile = null;
+            const fileInput = document.getElementById('fileInput');
+            fileInput.value = '';
+            document.getElementById('base64Output').value = '';
+            const preview = document.getElementById('preview');
+            preview.innerHTML = '<div class="preview-content"><div class="preview-placeholder">File preview will appear here</div></div>';
+            const fileInfo = document.getElementById('fileInfo');
+            fileInfo.style.display = 'none';
+            document.getElementById('fileName').textContent = '-';
+            document.getElementById('fileType').textContent = '-';
+            document.getElementById('fileExtension').textContent = '-';
+            document.getElementById('fileSizeEncode').textContent = '-';
+            document.getElementById('fileResolutionEncode').textContent = '-';
+            document.getElementById('fileBitDepthEncode').textContent = '-';
+            updateFloatingButton('base64Output', 'copyEncoded');
+            const dataUriToggle = document.getElementById('dataUriToggle');
+            dataUriToggle.dataset.active = 'false';
+            dataUriToggle.classList.remove('active');
+            showToast('Encode section cleared!', 'success');
+        });
+    }
+
+    const clearDecodeBtn = document.getElementById('clearDecode');
+    if (clearDecodeBtn) {
+        clearDecodeBtn.addEventListener('click', () => {
+            document.getElementById('base64Input').value = '';
+            document.getElementById('filename').value = '';
+            const preview = document.getElementById('decodedPreview');
+            preview.innerHTML = '<div class="preview-content"><div class="preview-placeholder">File preview will appear here</div></div>';
+            const fileInfo = document.getElementById('decodedFileInfo');
+            fileInfo.style.display = 'none';
+            document.getElementById('fileResolution').textContent = '-';
+            document.getElementById('fileMimeType').textContent = '-';
+            document.getElementById('fileExtension').textContent = '-';
+            document.getElementById('fileSize').textContent = '-';
+            document.getElementById('fileDownloadLink').href = '#';
+            document.getElementById('fileDownloadLink').textContent = '-';
+            document.getElementById('fileBitDepth').textContent = '-';
+            updateFloatingButton('base64Input', 'copyDecoded');
+            const decodeUriToggle = document.getElementById('decodeDataUriToggle');
+            decodeUriToggle.dataset.active = 'false';
+            decodeUriToggle.classList.remove('active');
+            showToast('Decode section cleared!', 'success');
+        });
+    }
+
+}
+
+function initFooter() {
+    // index.js (after DOM loaded)
+    document.getElementById('currentYear').textContent = new Date().getFullYear();
+    document.getElementById('authorDisplay').textContent = CONSTANTS.AUTHOR.name;
+    document.getElementById('copyright').textContent = CONSTANTS.COPYRIGHT;
+    document.getElementById('footerTitle').textContent = CONSTANTS.TITLE;
+    document.getElementById('tagline').textContent = CONSTANTS.TAGLINE;
+    document.querySelector('.footer-link.github').href = CONSTANTS.AUTHOR.github;
+    document.querySelector('.footer-link.linkedin').href = CONSTANTS.AUTHOR.linkedin;
+    document.querySelector('.footer-link.trailhead').href = CONSTANTS.AUTHOR.trailhead;
+    document.querySelector('.footer-link.email').href = `mailto:${CONSTANTS.AUTHOR.email}`;
 }
