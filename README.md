@@ -2,17 +2,29 @@
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)   
 [![Version](https://img.shields.io/badge/Version-1.0.0-blue.svg)](https://github.com/Kartikpatkar/base64-buddy)   
-<!-- [![Chrome Web Store](https://img.shields.io/chrome-web-store/v/ifliljlnfdnmagdgmomglfoimjcnpinb?label=Chrome%20Web%20Store&logo=google-chrome)](https://chromewebstore.google.com/detail/icons-kit-for-salesforce/pgjeeljfclipedfnlojjchmmilddiaje) -->
+[![Chrome Web Store](https://img.shields.io/chrome-web-store/v/ifliljlnfdnmagdgmomglfoimjcnpinb?label=Chrome%20Web%20Store&logo=google-chrome)](https://chromewebstore.google.com/detail/base64-buddy/pbaojpkalnecabmgnkgdpfonmafpfphh)
 
-<!-- > **Tagline**: *Browse, preview, customize, and copy SLDS icons like a pro.* -->
+> **Tagline:** _Encode. Decode. Simplify._
 
-<!-- ## ✨ Overview
+## ✨ Overview
 
-**Icons Kit for Salesforce Developer** is a full-tab Chrome Extension built for Salesforce Admins, Developers, and Architects. It provides a lightning-fast, beautifully designed interface to explore the full SLDS icon set — including Utility, Standard, Action, Custom, and Doctype categories.
+**Base64 Buddy** is a modern, privacy-focused Chrome Extension that allows developers and designers to **encode and decode files into Base64 format** directly within the browser.  
 
-No more hunting down SVGs, guessing `icon-name`s, or fiddling with styling. With this tool, you can **instantly preview**, **customize**, and **copy** icons in LWC, Aura, or raw HTML/SVG formats.
+Whether you’re working on web integrations, Salesforce configurations, or API payloads, Base64 Buddy simplifies the entire process with a clean, responsive, and developer-friendly interface.  
 
---- -->
+You can **upload files, preview them instantly, generate Base64 strings, decode existing data**, and even copy or clear results with a single click — all while staying fully offline.  
+
+It’s built to be fast, intuitive, and visually consistent across devices, with features like:  
+- Dual panels for encoding and decoding  
+- Real-time image/file preview  
+- Auto-generated file info (type, size, resolution)  
+- URI toggling and copy-to-clipboard support  
+- Dark/light theme with smooth UI transitions  
+- Persistent history and preferences stored locally  
+
+> 🚀 **Base64 Buddy** — your trusted companion for Base64 encoding and decoding, built for precision, performance, and privacy.
+
+---
 
 ## 🚀 Features
 
@@ -74,7 +86,7 @@ No more hunting down SVGs, guessing `icon-name`s, or fiddling with styling. With
 
 You can install **Base64 Buddy** directly from the Chrome Web Store:
 
-👉 [Install from Chrome Web Store](https://chrome.google.com/webstore/detail/icons-kit-for-salesforce/pgjeeljfclipedfnlojjchmmilddiaje)
+👉 [Install from Chrome Web Store](https://chromewebstore.google.com/detail/base64-buddy/pbaojpkalnecabmgnkgdpfonmafpfphh)
 
 Once installed:
 - Click the extension icon in your browser 
