@@ -57,16 +57,21 @@ function initTabs() {
 // -------------------------------
 async function initTheme() {
     const themeSwitch = document.getElementById('themeSwitch');
+    const themeIcon = document.getElementById('themeIcon');
     const { theme = 'light' } = await chrome.storage.local.get('theme');
 
     if (theme === 'dark') {
         document.body.classList.add('dark');
         themeSwitch.checked = true;
+        if (themeIcon) themeIcon.textContent = 'light_mode';
+    } else {
+        if (themeIcon) themeIcon.textContent = 'dark_mode';
     }
 
     themeSwitch.addEventListener('change', async () => {
         const isDark = themeSwitch.checked;
         document.body.classList.toggle('dark', isDark);
+        if (themeIcon) themeIcon.textContent = isDark ? 'light_mode' : 'dark_mode';
         await chrome.storage.local.set({ theme: isDark ? 'dark' : 'light' });
     });
 }
@@ -288,7 +293,7 @@ function showPreview(file, base64) {
     } else {
         // Non-image file
         previewContent.innerHTML = `
-            <div style="text-align: center; font-size: 2rem;">📄</div>
+            <div style="text-align: center; margin-bottom: 8px;"><span class="material-symbols-outlined" style="font-size: 3rem; color: #64748b;">description</span></div>
             <div style="text-align: center;"><strong>${file.name}</strong></div>
             <div style="text-align: center; color: #64748b;">${formatFileSize(file.size)}</div>
         `;
@@ -419,7 +424,7 @@ function showDecodedPreview(base64, filename) {
             };
             img.onerror = () => {
                 previewContent.innerHTML = `
-                    <div style="font-size: 2rem; text-align: center;">⚠️</div>
+                    <div style="text-align: center; margin-bottom: 8px;"><span class="material-symbols-outlined" style="font-size: 3rem; color: #ef4444;">warning</span></div>
                     <div style="text-align: center; color: #ef4444;"><strong>Failed to load image preview</strong></div>
                     <div style="text-align: center; color: #64748b; font-size: 0.9rem;">Invalid image data format.</div>
                 `;
@@ -435,7 +440,9 @@ function showDecodedPreview(base64, filename) {
                     previewContent.innerHTML = `
                         <div class="text-preview-container" style="width: 100%; display: flex; flex-direction: column; gap: 8px;">
                             <textarea id="decodedTextOutput" readonly class="decoded-text-area" style="width: 100%; min-height: 120px; font-family: monospace; font-size: 0.9rem; resize: vertical;"></textarea>
-                            <button id="copyDecodedTextBtn" class="btn btn-secondary" style="padding: 8px 16px; font-size: 0.9rem; align-self: flex-end;">📋 Copy Text</button>
+                            <button id="copyDecodedTextBtn" class="btn btn-secondary" style="padding: 8px 16px; font-size: 0.9rem; align-self: flex-end; display: inline-flex; align-items: center; gap: 6px;">
+                                <span class="material-symbols-outlined" style="font-size: 1.1rem;">content_copy</span> Copy Text
+                            </button>
                         </div>
                     `;
                     const textarea = document.getElementById('decodedTextOutput');
@@ -447,14 +454,14 @@ function showDecodedPreview(base64, filename) {
                     });
                 } else {
                     previewContent.innerHTML = `
-                        <div style="font-size: 2rem; text-align: center;">📄</div>
+                        <div style="text-align: center; margin-bottom: 8px;"><span class="material-symbols-outlined" style="font-size: 3rem; color: #64748b;">description</span></div>
                         <div style="text-align: center;"><strong>${filename}</strong></div>
                         <div style="text-align: center; color: #64748b;">Binary file - Ready to download</div>
                     `;
                 }
             }).catch(() => {
                 previewContent.innerHTML = `
-                    <div style="font-size: 2rem; text-align: center;">📄</div>
+                    <div style="text-align: center; margin-bottom: 8px;"><span class="material-symbols-outlined" style="font-size: 3rem; color: #64748b;">description</span></div>
                     <div style="text-align: center;"><strong>${filename}</strong></div>
                     <div style="text-align: center; color: #64748b;">Ready to download</div>
                 `;
