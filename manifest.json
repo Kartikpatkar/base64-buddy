@@ -3,7 +3,7 @@
   "name": "Base64 Buddy",
   "version": "1.0",
   "description": "Encode/Decode files in Base64",
-  "permissions": ["storage", "clipboardWrite", "tabs"],
+  "permissions": ["storage", "clipboardWrite"],
   "background": {
     "service_worker": "background/service_worker.js"
   },

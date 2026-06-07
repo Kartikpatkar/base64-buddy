@@ -1,19 +1,20 @@
 import * as CONSTANTS from '../utils/constants.js';
+import { encodeFileToBase64, decodeBase64ToBlob } from '../utils/base64.js';
 // -------------------------------
 // State
 // -------------------------------
 let currentFile = null;
 let decodedObjectUrl = null;
-let history = JSON.parse(localStorage.getItem('base64History') || '[]');
+let history = [];
 
 // -------------------------------
 // Initialize
 // -------------------------------
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', async () => {
     initTabs();
-    initTheme();
+    await initTheme();
     initFileHandling();
-    loadHistory();
+    await loadHistory();
     initFloatingButtons();
     initClearButtons();
 
@@ -54,19 +55,19 @@ function initTabs() {
 // -------------------------------
 // Theme Toggle
 // -------------------------------
-function initTheme() {
+async function initTheme() {
     const themeSwitch = document.getElementById('themeSwitch');
-    const savedTheme = localStorage.getItem('theme') || 'light';
+    const { theme = 'light' } = await chrome.storage.local.get('theme');
 
-    if (savedTheme === 'dark') {
+    if (theme === 'dark') {
         document.body.classList.add('dark');
         themeSwitch.checked = true;
     }
 
-    themeSwitch.addEventListener('change', () => {
+    themeSwitch.addEventListener('change', async () => {
         const isDark = themeSwitch.checked;
         document.body.classList.toggle('dark', isDark);
-        localStorage.setItem('theme', isDark ? 'dark' : 'light');
+        await chrome.storage.local.set({ theme: isDark ? 'dark' : 'light' });
     });
 }
 
@@ -457,23 +458,7 @@ function showDecodedPreview(base64, filename) {
 
 
 
-// -------------------------------
-// Decode Base64 to Blob
-// -------------------------------
-function decodeBase64ToBlob(base64) {
-    const parts = base64.split(',');
-    const b64 = parts.length > 1 ? parts[1] : parts[0];
-    const mime = parts.length > 1 ? parts[0].match(/data:(.*);base64/)[1] : 'application/octet-stream';
-    const byteCharacters = atob(b64);
-    const byteNumbers = new Array(byteCharacters.length);
 
-    for (let i = 0; i < byteCharacters.length; i++) {
-        byteNumbers[i] = byteCharacters.charCodeAt(i);
-    }
-
-    const byteArray = new Uint8Array(byteNumbers);
-    return new Blob([byteArray], { type: mime });
-}
 
 
 function updateDecodePreview() {
@@ -496,7 +481,7 @@ function updateDecodePreview() {
 // -------------------------------
 // History
 // -------------------------------
-function addToHistory(type, filename, content) {
+async function addToHistory(type, filename, content) {
     const item = {
         type,
         filename,
@@ -505,12 +490,14 @@ function addToHistory(type, filename, content) {
     };
     history.unshift(item);
     if (history.length > 50) history = history.slice(0, 50);
-    localStorage.setItem('base64History', JSON.stringify(history));
-    loadHistory();
+    await chrome.storage.local.set({ base64History: history });
+    await loadHistory();
 }
 
-function loadHistory() {
+async function loadHistory() {
     const list = document.getElementById('historyList');
+    const { base64History = [] } = await chrome.storage.local.get('base64History');
+    history = base64History;
     if (!history.length) {
         list.innerHTML = '<div class="preview-placeholder">No history items yet</div>';
         return;
@@ -527,10 +514,10 @@ function loadHistory() {
     `).join('');
 }
 
-function clearHistory() {
+async function clearHistory() {
     history = [];
-    localStorage.removeItem('base64History');
-    loadHistory();
+    await chrome.storage.local.remove('base64History');
+    await loadHistory();
     showToast('History cleared!', 'success');
 }
 

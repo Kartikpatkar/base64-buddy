@@ -1,5 +1,11 @@
 // utils/base64.js
-function encodeFileToBase64(file) {
+
+/**
+ * Encodes a file to a Base64 Data URL.
+ * @param {File} file 
+ * @returns {Promise<string>}
+ */
+export function encodeFileToBase64(file) {
     return new Promise((resolve, reject) => {
         const reader = new FileReader();
         reader.onload = () => resolve(reader.result);
@@ -8,13 +14,24 @@ function encodeFileToBase64(file) {
     });
 }
 
-function decodeBase64ToBlob(base64) {
-    const byteString = atob(base64.split(',')[1] || base64);
-    const mimeString = base64.split(',')[0].split(':')[1]?.split(';')[0] || '';
-    const ab = new ArrayBuffer(byteString.length);
-    const ia = new Uint8Array(ab);
-    for (let i = 0; i < byteString.length; i++) {
-        ia[i] = byteString.charCodeAt(i);
+/**
+ * Decodes a Base64 string (with or without Data URI prefix) into a Blob.
+ * @param {string} base64 
+ * @returns {Blob}
+ */
+export function decodeBase64ToBlob(base64) {
+    const parts = base64.split(',');
+    const b64 = parts.length > 1 ? parts[1] : parts[0];
+    const match = parts.length > 1 ? parts[0].match(/data:(.*);base64/) : null;
+    const mime = match ? match[1] : 'application/octet-stream';
+
+    const byteCharacters = atob(b64);
+    const byteNumbers = new Array(byteCharacters.length);
+
+    for (let i = 0; i < byteCharacters.length; i++) {
+        byteNumbers[i] = byteCharacters.charCodeAt(i);
     }
-    return new Blob([ab], { type: mimeString });
+
+    const byteArray = new Uint8Array(byteNumbers);
+    return new Blob([byteArray], { type: mime });
 }
