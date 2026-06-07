@@ -880,3 +880,20 @@ body.dark .footer a:hover {
 body.dark .footer-logo {
     color: #8b5cf6;
 }
+
+/* -------------------------------
+   Plaintext Preview Styling
+------------------------------- */
+.decoded-text-area {
+    background: #fafafa;
+    border: 1px solid #e2e8f0;
+    color: #334155;
+    outline: none;
+    transition: all 0.3s ease;
+}
+
+body.dark .decoded-text-area {
+    background: #2a2a2a;
+    border-color: #444;
+    color: #eaeaea;
+}

@@ -1,5 +1,5 @@
 import * as CONSTANTS from '../utils/constants.js';
-import { encodeFileToBase64, decodeBase64ToBlob } from '../utils/base64.js';
+import { encodeFileToBase64, decodeBase64ToBlob, detectMimeTypeFromBase64 } from '../utils/base64.js';
 // -------------------------------
 // State
 // -------------------------------
@@ -92,6 +92,7 @@ function initFileHandling() {
     fileInput.addEventListener('change', e => processFile(e.target.files[0]));
     document.getElementById('decodeButton').addEventListener('click', decodeBase64);
     document.getElementById('clearHistory').addEventListener('click', clearHistory);
+    document.getElementById('downloadEncoded').addEventListener('click', downloadBase64);
 }
 
 // -------------------------------
@@ -317,7 +318,7 @@ function downloadBase64() {
     const output = document.getElementById('base64Output');
     if (!output.value) return;
 
-    const filename = currentFile ? currentFile.name + '.base64' : 'encoded.base64';
+    const filename = currentFile ? currentFile.name + '_base64.txt' : 'encoded_base64.txt';
     const blob = new Blob([output.value], { type: 'text/plain' });
     const url = URL.createObjectURL(blob);
 
@@ -350,13 +351,7 @@ function decodeBase64() {
         }
 
         // Determine MIME type for preview
-        let mime = 'application/octet-stream';
-        if (input.startsWith('data:')) {
-            mime = input.split(':')[1].split(';')[0];
-        } else if (/^(?:[A-Za-z0-9+/]{4})*(?:[A-Za-z0-9+/]{2}==|[A-Za-z0-9+/]{3}=)?$/.test(base64Str)) {
-            // crude image type detection for preview
-            mime = 'image/jpeg';
-        }
+        let mime = detectMimeTypeFromBase64(input);
 
         // Always pass proper Data URI to preview
         const previewBase64 = base64Str.startsWith('data:')
@@ -433,11 +428,37 @@ function showDecodedPreview(base64, filename) {
             img.src = base64;
             img.alt = 'Decoded Preview';
         } else {
-            previewContent.innerHTML = `
-                <div style="font-size: 2rem; text-align: center;">📄</div>
-                <div style="text-align: center;"><strong>${filename}</strong></div>
-                <div style="text-align: center;">Ready to download</div>
-            `;
+            // Check if the decoded content is plaintext
+            blob.text().then(text => {
+                const isText = !/[\x00-\x08\x0E-\x1F]/.test(text.slice(0, 1000));
+                if (isText) {
+                    previewContent.innerHTML = `
+                        <div class="text-preview-container" style="width: 100%; display: flex; flex-direction: column; gap: 8px;">
+                            <textarea id="decodedTextOutput" readonly class="decoded-text-area" style="width: 100%; min-height: 120px; font-family: monospace; font-size: 0.9rem; resize: vertical;"></textarea>
+                            <button id="copyDecodedTextBtn" class="btn btn-secondary" style="padding: 8px 16px; font-size: 0.9rem; align-self: flex-end;">📋 Copy Text</button>
+                        </div>
+                    `;
+                    const textarea = document.getElementById('decodedTextOutput');
+                    textarea.value = text;
+                    document.getElementById('copyDecodedTextBtn').addEventListener('click', () => {
+                        navigator.clipboard.writeText(text)
+                            .then(() => showToast('Decoded text copied!', 'success'))
+                            .catch(() => showToast('Copy failed', 'error'));
+                    });
+                } else {
+                    previewContent.innerHTML = `
+                        <div style="font-size: 2rem; text-align: center;">📄</div>
+                        <div style="text-align: center;"><strong>${filename}</strong></div>
+                        <div style="text-align: center; color: #64748b;">Binary file - Ready to download</div>
+                    `;
+                }
+            }).catch(() => {
+                previewContent.innerHTML = `
+                    <div style="font-size: 2rem; text-align: center;">📄</div>
+                    <div style="text-align: center;"><strong>${filename}</strong></div>
+                    <div style="text-align: center; color: #64748b;">Ready to download</div>
+                `;
+            });
 
             document.getElementById('fileResolution').textContent = '-';
             document.getElementById('fileMimeType').textContent = mimeType;
@@ -471,8 +492,17 @@ function updateDecodePreview() {
         return;
     }
 
+    // Auto-detect and enable Data URI header if present
+    const decodeUriToggle = document.getElementById('decodeDataUriToggle');
+    if (val.startsWith('data:') && decodeUriToggle.dataset.active === 'false') {
+        decodeUriToggle.dataset.active = 'true';
+        decodeUriToggle.classList.add('active');
+        showToast('Data URI header auto-detected and enabled!', 'success');
+    }
+
     // Always construct a Data URI for preview
-    let previewBase64 = val.startsWith('data:') ? val : `data:image/jpeg;base64,${val.includes(',') ? val.split(',')[1] : val}`;
+    const detectedMime = detectMimeTypeFromBase64(val);
+    let previewBase64 = val.startsWith('data:') ? val : `data:${detectedMime};base64,${val.includes(',') ? val.split(',')[1] : val}`;
 
     showDecodedPreview(previewBase64, 'Preview');
 }
