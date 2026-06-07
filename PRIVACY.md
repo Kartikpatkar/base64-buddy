@@ -31,9 +31,9 @@ Your files, text, and Base64 data never leave your device.
 
 ---
 
-## 💾 Local Storage
+## 💾 Extension Storage
 
-Base64 Buddy may use your browser’s **Local Storage** only to save optional, non-sensitive preferences such as:
+Base64 Buddy may use Chrome's extension storage (`chrome.storage.local`) only to save optional, non-sensitive preferences such as:
 - Recently used Base64 history  
 - Theme settings (light/dark mode)  
 - User interface state or tabs  
