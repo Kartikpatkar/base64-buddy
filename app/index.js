@@ -1,18 +1,39 @@
 import * as CONSTANTS from '../utils/constants.js';
+import { encodeFileToBase64, decodeBase64ToBlob, detectMimeTypeFromBase64 } from '../utils/base64.js';
 // -------------------------------
-// State
+// State & Constants
 // -------------------------------
 let currentFile = null;
-let history = JSON.parse(localStorage.getItem('base64History') || '[]');
+let decodedObjectUrl = null;
+let history = [];
+
+const MIME_TO_EXTENSION = {
+    'application/pdf': 'pdf',
+    'application/zip': 'zip',
+    'application/json': 'json',
+    'application/xml': 'xml',
+    'text/html': 'html',
+    'image/svg+xml': 'svg',
+    'audio/mpeg': 'mp3',
+    'video/mp4': 'mp4',
+    'image/x-icon': 'ico',
+    'image/bmp': 'bmp',
+    'text/plain': 'txt',
+    'text/csv': 'csv',
+    'image/png': 'png',
+    'image/jpeg': 'jpg',
+    'image/gif': 'gif',
+    'image/webp': 'webp'
+};
 
 // -------------------------------
 // Initialize
 // -------------------------------
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', async () => {
     initTabs();
-    initTheme();
+    await initTheme();
     initFileHandling();
-    loadHistory();
+    await loadHistory();
     initFloatingButtons();
     initClearButtons();
 
@@ -26,6 +47,70 @@ document.addEventListener('DOMContentLoaded', () => {
             }, 100);
         });
     }
+
+    // Input handler for manual output changes
+    const base64Output = document.getElementById('base64Output');
+    if (base64Output) {
+        base64Output.addEventListener('input', () => {
+            if (!base64Output.value.trim()) {
+                const encodeStats = document.getElementById('encodeStats');
+                if (encodeStats) encodeStats.style.display = 'none';
+            } else {
+                const estimatedOriginal = Math.floor(base64Output.value.length * 0.75);
+                updateEncodeStats(estimatedOriginal, base64Output.value.length);
+            }
+        });
+    }
+
+    // Global paste handler for file/image pasting
+    window.addEventListener('paste', e => {
+        if (e.clipboardData.files && e.clipboardData.files.length > 0) {
+            e.preventDefault();
+            const file = e.clipboardData.files[0];
+            const encodeTabBtn = document.querySelector('.tab-button[data-tab="encode"]');
+            if (encodeTabBtn) encodeTabBtn.click();
+            processFile(file);
+        }
+    });
+
+    // History Search Event
+    const historySearch = document.getElementById('historySearch');
+    if (historySearch) {
+        historySearch.addEventListener('input', e => {
+            loadHistory(e.target.value.trim());
+        });
+    }
+
+    // Export History Event
+    const exportHistoryBtn = document.getElementById('exportHistory');
+    if (exportHistoryBtn) {
+        exportHistoryBtn.addEventListener('click', exportHistoryLogs);
+    }
+
+    // Keyboard Shortcuts Registration
+    window.addEventListener('keydown', handleKeyboardShortcuts);
+
+    // Help Modal Logic
+    const helpButton = document.getElementById('helpButton');
+    const helpModal = document.getElementById('helpModal');
+    const closeHelpModal = document.getElementById('closeHelpModal');
+
+    if (helpButton && helpModal && closeHelpModal) {
+        helpButton.addEventListener('click', () => {
+            helpModal.classList.add('show');
+        });
+
+        closeHelpModal.addEventListener('click', () => {
+            helpModal.classList.remove('show');
+        });
+
+        helpModal.addEventListener('click', (e) => {
+            if (e.target === helpModal) {
+                helpModal.classList.remove('show');
+            }
+        });
+    }
+
     document.getElementById('currentYear').textContent = new Date().getFullYear();
     initFooter();
 });
@@ -53,19 +138,24 @@ function initTabs() {
 // -------------------------------
 // Theme Toggle
 // -------------------------------
-function initTheme() {
+async function initTheme() {
     const themeSwitch = document.getElementById('themeSwitch');
-    const savedTheme = localStorage.getItem('theme') || 'light';
+    const themeIcon = document.getElementById('themeIcon');
+    const { theme = 'light' } = await chrome.storage.local.get('theme');
 
-    if (savedTheme === 'dark') {
+    if (theme === 'dark') {
         document.body.classList.add('dark');
         themeSwitch.checked = true;
+        if (themeIcon) themeIcon.textContent = 'light_mode';
+    } else {
+        if (themeIcon) themeIcon.textContent = 'dark_mode';
     }
 
-    themeSwitch.addEventListener('change', () => {
+    themeSwitch.addEventListener('change', async () => {
         const isDark = themeSwitch.checked;
         document.body.classList.toggle('dark', isDark);
-        localStorage.setItem('theme', isDark ? 'dark' : 'light');
+        if (themeIcon) themeIcon.textContent = isDark ? 'light_mode' : 'dark_mode';
+        await chrome.storage.local.set({ theme: isDark ? 'dark' : 'light' });
     });
 }
 
@@ -90,6 +180,7 @@ function initFileHandling() {
     fileInput.addEventListener('change', e => processFile(e.target.files[0]));
     document.getElementById('decodeButton').addEventListener('click', decodeBase64);
     document.getElementById('clearHistory').addEventListener('click', clearHistory);
+    document.getElementById('downloadEncoded').addEventListener('click', downloadBase64);
 }
 
 // -------------------------------
@@ -160,7 +251,10 @@ function setupFloatingButton(textarea, button) {
     button.addEventListener('click', () => {
         if (!textarea.value) return;
         navigator.clipboard.writeText(textarea.value)
-            .then(() => showToast('Copied to clipboard!', 'success'))
+            .then(() => {
+                showToast('Copied to clipboard!', 'success');
+                animateCopyButton(button);
+            })
             .catch(() => showToast('Copy failed', 'error'));
     });
 }
@@ -247,6 +341,7 @@ function processFile(file) {
         showPreview(file, base64WithUri);
         addToHistory('encode', file.name, output);
         updateFloatingButton('base64Output', 'copyEncoded');
+        updateEncodeStats(file.size, output.length);
         showToast('File encoded successfully!', 'success');
     }).catch((error) => {
         console.error(error);
@@ -285,9 +380,8 @@ function showPreview(file, base64) {
     } else {
         // Non-image file
         previewContent.innerHTML = `
-            <div style="text-align: center; font-size: 2rem;">📄</div>
+            <div style="text-align: center; margin-bottom: 8px;"><span class="material-symbols-outlined" style="font-size: 3rem; color: #64748b;">description</span></div>
             <div style="text-align: center;"><strong>${file.name}</strong></div>
-            <div style="text-align: center; color: #64748b;">${formatFileSize(file.size)}</div>
         `;
 
         document.getElementById('fileName').textContent = file.name;
@@ -315,7 +409,7 @@ function downloadBase64() {
     const output = document.getElementById('base64Output');
     if (!output.value) return;
 
-    const filename = currentFile ? currentFile.name + '.base64' : 'encoded.base64';
+    const filename = currentFile ? currentFile.name + '_base64.txt' : 'encoded_base64.txt';
     const blob = new Blob([output.value], { type: 'text/plain' });
     const url = URL.createObjectURL(blob);
 
@@ -348,13 +442,7 @@ function decodeBase64() {
         }
 
         // Determine MIME type for preview
-        let mime = 'application/octet-stream';
-        if (input.startsWith('data:')) {
-            mime = input.split(':')[1].split(';')[0];
-        } else if (/^(?:[A-Za-z0-9+/]{4})*(?:[A-Za-z0-9+/]{2}==|[A-Za-z0-9+/]{3}=)?$/.test(base64Str)) {
-            // crude image type detection for preview
-            mime = 'image/jpeg';
-        }
+        let mime = detectMimeTypeFromBase64(input);
 
         // Always pass proper Data URI to preview
         const previewBase64 = base64Str.startsWith('data:')
@@ -391,69 +479,144 @@ function showDecodedPreview(base64, filename) {
     const previewContent = preview.querySelector('.preview-content');
     previewContent.innerHTML = ''; // now safe
 
-    const mimeType = base64.startsWith('data:') ? base64.split(':')[1].split(';')[0] : 'application/octet-stream';
-    const extension = mimeType.split('/')[1] || 'bin';
+    try {
+        const mimeType = base64.startsWith('data:') ? base64.split(':')[1].split(';')[0] : 'application/octet-stream';
+        const extension = MIME_TO_EXTENSION[mimeType] || mimeType.split('/')[1] || 'bin';
 
-    const blob = decodeBase64ToBlob(base64);
-    const size = formatFileSize(blob.size);
+        const blob = decodeBase64ToBlob(base64);
+        const size = formatFileSize(blob.size);
 
-    if (mimeType.startsWith('image/')) {
-        const img = new Image();
-        img.onload = () => {
-            previewContent.appendChild(img);
+        if (decodedObjectUrl) {
+            URL.revokeObjectURL(decodedObjectUrl);
+            decodedObjectUrl = null;
+        }
+        decodedObjectUrl = URL.createObjectURL(blob);
 
-            // Show file info
-            document.getElementById('fileResolution').textContent = `${img.naturalWidth}×${img.naturalHeight}`;
+        if (mimeType.startsWith('image/') && mimeType !== 'image/svg+xml') {
+            const img = new Image();
+            img.onload = () => {
+                previewContent.appendChild(img);
+
+                // Show file info
+                document.getElementById('fileResolution').textContent = `${img.naturalWidth}×${img.naturalHeight}`;
+                document.getElementById('fileMimeType').textContent = mimeType;
+                document.getElementById('fileExtension').textContent = extension;
+                document.getElementById('fileSize').textContent = size;
+                document.getElementById('fileDownloadLink').href = decodedObjectUrl;
+                document.getElementById('fileDownloadLink').download = filename;
+                document.getElementById('fileDownloadLink').textContent = filename;
+                document.getElementById('fileBitDepth').textContent = 8;
+                fileInfo.style.display = 'block';
+            };
+            img.onerror = () => {
+                previewContent.innerHTML = `
+                    <div style="text-align: center; margin-bottom: 8px;"><span class="material-symbols-outlined" style="font-size: 3rem; color: #ef4444;">warning</span></div>
+                    <div style="text-align: center; color: #ef4444;"><strong>Failed to load image preview</strong></div>
+                    <div style="text-align: center; color: #64748b; font-size: 0.9rem;">Invalid image data format.</div>
+                `;
+                fileInfo.style.display = 'none';
+            };
+            img.src = base64;
+            img.alt = 'Decoded Preview';
+        } else {
+            // Check if the decoded content is plaintext
+            blob.text().then(text => {
+                const isText = !/[\x00-\x08\x0E-\x1F]/.test(text.slice(0, 1000));
+                if (isText) {
+                    previewContent.innerHTML = `
+                        <div class="text-preview-container" style="width: 100%; display: flex; flex-direction: column; gap: 8px;">
+                            <textarea id="decodedTextOutput" readonly class="decoded-text-area" style="width: 100%; min-height: 120px; font-family: monospace; font-size: 0.9rem; resize: vertical;"></textarea>
+                            <div class="text-preview-actions" style="display: flex; justify-content: flex-end; gap: 10px;">
+                                <button id="beautifyJsonBtn" class="btn btn-secondary" style="padding: 8px 16px; font-size: 0.9rem; display: none; align-items: center; gap: 6px;">
+                                    <span class="material-symbols-outlined" style="font-size: 1.1rem;">format_align_left</span> Beautify JSON
+                                </button>
+                                <button id="copyDecodedTextBtn" class="btn btn-secondary" style="padding: 8px 16px; font-size: 0.9rem; display: inline-flex; align-items: center; gap: 6px;">
+                                    <span class="material-symbols-outlined" style="font-size: 1.1rem;">content_copy</span> Copy Text
+                                </button>
+                            </div>
+                        </div>
+                    `;
+                    const textarea = document.getElementById('decodedTextOutput');
+                    textarea.value = text;
+
+                    // Setup Copy Event
+                    const copyBtn = document.getElementById('copyDecodedTextBtn');
+                    copyBtn.addEventListener('click', () => {
+                        navigator.clipboard.writeText(textarea.value)
+                            .then(() => {
+                                showToast('Decoded text copied!', 'success');
+                                animateCopyButton(copyBtn);
+                            })
+                            .catch(() => showToast('Copy failed', 'error'));
+                    });
+
+                    // Setup Beautify JSON Event if it's JSON
+                    const trimmed = text.trim();
+                    let isJson = false;
+                    if ((trimmed.startsWith('{') && trimmed.endsWith('}')) || (trimmed.startsWith('[') && trimmed.endsWith(']'))) {
+                        try {
+                            JSON.parse(trimmed);
+                            isJson = true;
+                        } catch (e) {}
+                    }
+
+                    if (isJson) {
+                        const beautifyBtn = document.getElementById('beautifyJsonBtn');
+                        beautifyBtn.style.display = 'inline-flex';
+                        let formatted = false;
+                        beautifyBtn.addEventListener('click', () => {
+                            try {
+                                const val = textarea.value;
+                                const parsed = JSON.parse(val);
+                                if (!formatted) {
+                                    textarea.value = JSON.stringify(parsed, null, 2);
+                                    beautifyBtn.innerHTML = '<span class="material-symbols-outlined" style="font-size: 1.1rem;">compress</span> Minify JSON';
+                                    formatted = true;
+                                } else {
+                                    textarea.value = JSON.stringify(parsed);
+                                    beautifyBtn.innerHTML = '<span class="material-symbols-outlined" style="font-size: 1.1rem;">format_align_left</span> Beautify JSON';
+                                    formatted = false;
+                                }
+                            } catch (e) {
+                                showToast('Invalid JSON structure', 'error');
+                            }
+                        });
+                    }
+                } else {
+                    previewContent.innerHTML = `
+                        <div style="text-align: center; margin-bottom: 8px;"><span class="material-symbols-outlined" style="font-size: 3rem; color: #64748b;">description</span></div>
+                        <div style="text-align: center;"><strong>${filename}</strong></div>
+                        <div style="text-align: center; color: #64748b;">Binary file - Ready to download</div>
+                    `;
+                }
+            }).catch(() => {
+                previewContent.innerHTML = `
+                    <div style="text-align: center; margin-bottom: 8px;"><span class="material-symbols-outlined" style="font-size: 3rem; color: #64748b;">description</span></div>
+                    <div style="text-align: center;"><strong>${filename}</strong></div>
+                    <div style="text-align: center; color: #64748b;">Ready to download</div>
+                `;
+            });
+
+            document.getElementById('fileResolution').textContent = '-';
             document.getElementById('fileMimeType').textContent = mimeType;
             document.getElementById('fileExtension').textContent = extension;
             document.getElementById('fileSize').textContent = size;
-            document.getElementById('fileDownloadLink').href = URL.createObjectURL(blob);
+            document.getElementById('fileDownloadLink').href = decodedObjectUrl;
             document.getElementById('fileDownloadLink').download = filename;
             document.getElementById('fileDownloadLink').textContent = filename;
-            document.getElementById('fileBitDepth').textContent = 8;
+            document.getElementById('fileBitDepth').textContent = '-';
             fileInfo.style.display = 'block';
-        };
-        img.src = base64;
-        img.alt = 'Decoded Preview';
-    } else {
-        previewContent.innerHTML = `
-            <div style="font-size: 2rem; text-align: center;">📄</div>
-            <div style="text-align: center;"><strong>${filename}</strong></div>
-            <div style="text-align: center;">Ready to download</div>
-        `;
-
-        document.getElementById('fileResolution').textContent = '-';
-        document.getElementById('fileMimeType').textContent = mimeType;
-        document.getElementById('fileExtension').textContent = extension;
-        document.getElementById('fileSize').textContent = size;
-        document.getElementById('fileDownloadLink').href = URL.createObjectURL(blob);
-        document.getElementById('fileDownloadLink').download = filename;
-        document.getElementById('fileDownloadLink').textContent = filename;
-        document.getElementById('fileBitDepth').textContent = '-';
-        fileInfo.style.display = 'block';
+        }
+    } catch (error) {
+        previewContent.innerHTML = '<div class="preview-placeholder">Enter valid Base64 string to see preview</div>';
+        fileInfo.style.display = 'none';
     }
 }
 
 
 
 
-// -------------------------------
-// Decode Base64 to Blob
-// -------------------------------
-function decodeBase64ToBlob(base64) {
-    const parts = base64.split(',');
-    const b64 = parts.length > 1 ? parts[1] : parts[0];
-    const mime = parts.length > 1 ? parts[0].match(/data:(.*);base64/)[1] : 'application/octet-stream';
-    const byteCharacters = atob(b64);
-    const byteNumbers = new Array(byteCharacters.length);
 
-    for (let i = 0; i < byteCharacters.length; i++) {
-        byteNumbers[i] = byteCharacters.charCodeAt(i);
-    }
-
-    const byteArray = new Uint8Array(byteNumbers);
-    return new Blob([byteArray], { type: mime });
-}
 
 
 function updateDecodePreview() {
@@ -466,8 +629,17 @@ function updateDecodePreview() {
         return;
     }
 
+    // Auto-detect and enable Data URI header if present
+    const decodeUriToggle = document.getElementById('decodeDataUriToggle');
+    if (val.startsWith('data:') && decodeUriToggle.dataset.active === 'false') {
+        decodeUriToggle.dataset.active = 'true';
+        decodeUriToggle.classList.add('active');
+        showToast('Data URI header auto-detected and enabled!', 'success');
+    }
+
     // Always construct a Data URI for preview
-    let previewBase64 = val.startsWith('data:') ? val : `data:image/jpeg;base64,${val.includes(',') ? val.split(',')[1] : val}`;
+    const detectedMime = detectMimeTypeFromBase64(val);
+    let previewBase64 = val.startsWith('data:') ? val : `data:${detectedMime};base64,${val.includes(',') ? val.split(',')[1] : val}`;
 
     showDecodedPreview(previewBase64, 'Preview');
 }
@@ -476,7 +648,7 @@ function updateDecodePreview() {
 // -------------------------------
 // History
 // -------------------------------
-function addToHistory(type, filename, content) {
+async function addToHistory(type, filename, content) {
     const item = {
         type,
         filename,
@@ -485,17 +657,29 @@ function addToHistory(type, filename, content) {
     };
     history.unshift(item);
     if (history.length > 50) history = history.slice(0, 50);
-    localStorage.setItem('base64History', JSON.stringify(history));
-    loadHistory();
+    await chrome.storage.local.set({ base64History: history });
+    await loadHistory();
 }
 
-function loadHistory() {
+async function loadHistory(query = '') {
     const list = document.getElementById('historyList');
-    if (!history.length) {
-        list.innerHTML = '<div class="preview-placeholder">No history items yet</div>';
+    const { base64History = [] } = await chrome.storage.local.get('base64History');
+    history = base64History;
+
+    let filteredHistory = history;
+    if (query) {
+        const lowerQuery = query.toLowerCase();
+        filteredHistory = history.filter(i => 
+            (i.filename && i.filename.toLowerCase().includes(lowerQuery)) || 
+            (i.type && i.type.toLowerCase().includes(lowerQuery))
+        );
+    }
+
+    if (!filteredHistory.length) {
+        list.innerHTML = `<div class="preview-placeholder">${query ? 'No matching history items found' : 'No history items yet'}</div>`;
         return;
     }
-    list.innerHTML = history.map(i => `
+    list.innerHTML = filteredHistory.map(i => `
         <div class="history-item">
             <div class="history-header">
                 <span class="history-type">${i.type.toUpperCase()}</span>
@@ -507,10 +691,12 @@ function loadHistory() {
     `).join('');
 }
 
-function clearHistory() {
+async function clearHistory() {
     history = [];
-    localStorage.removeItem('base64History');
-    loadHistory();
+    await chrome.storage.local.remove('base64History');
+    const historySearch = document.getElementById('historySearch');
+    if (historySearch) historySearch.value = '';
+    await loadHistory();
     showToast('History cleared!', 'success');
 }
 
@@ -581,6 +767,11 @@ function initClearButtons() {
             const dataUriToggle = document.getElementById('dataUriToggle');
             dataUriToggle.dataset.active = 'false';
             dataUriToggle.classList.remove('active');
+            
+            // Hide statistics
+            const encodeStats = document.getElementById('encodeStats');
+            if (encodeStats) encodeStats.style.display = 'none';
+
             showToast('Encode section cleared!', 'success');
         });
     }
@@ -605,6 +796,10 @@ function initClearButtons() {
             const decodeUriToggle = document.getElementById('decodeDataUriToggle');
             decodeUriToggle.dataset.active = 'false';
             decodeUriToggle.classList.remove('active');
+            if (decodedObjectUrl) {
+                URL.revokeObjectURL(decodedObjectUrl);
+                decodedObjectUrl = null;
+            }
             showToast('Decode section cleared!', 'success');
         });
     }
@@ -622,4 +817,141 @@ function initFooter() {
     document.querySelector('.footer-link.linkedin').href = CONSTANTS.AUTHOR.linkedin;
     document.querySelector('.footer-link.trailhead').href = CONSTANTS.AUTHOR.trailhead;
     document.querySelector('.footer-link.email').href = `mailto:${CONSTANTS.AUTHOR.email}`;
+}
+
+// -------------------------------
+// Helper Functions for New Features
+// -------------------------------
+function animateCopyButton(button) {
+    if (!button) return;
+    const icon = button.querySelector('.material-symbols-outlined');
+    const tooltip = button.querySelector('.tooltip');
+    
+    const hasText = button.textContent.includes('Copy Text') || button.textContent.includes('Copied!');
+    
+    let originalIcon = 'content_copy';
+    if (icon) {
+        originalIcon = icon.textContent;
+        icon.textContent = 'check';
+    }
+    
+    let originalTooltip = '';
+    if (tooltip) {
+        originalTooltip = tooltip.textContent;
+        tooltip.textContent = 'Copied!';
+    }
+    
+    let originalTextNode = null;
+    if (hasText) {
+        for (const child of button.childNodes) {
+            if (child.nodeType === Node.TEXT_NODE && child.textContent.trim()) {
+                originalTextNode = child;
+                child.textContent = ' Copied!';
+                break;
+            }
+        }
+    }
+
+    button.classList.add('copied');
+
+    setTimeout(() => {
+        if (icon) {
+            icon.textContent = originalIcon;
+        }
+        if (tooltip) {
+            tooltip.textContent = originalTooltip;
+        }
+        if (originalTextNode) {
+            originalTextNode.textContent = ' Copy Text';
+        }
+        button.classList.remove('copied');
+    }, 2000);
+}
+
+function updateEncodeStats(originalSize, b64Length) {
+    const encodeStats = document.getElementById('encodeStats');
+    if (!encodeStats) return;
+
+    const statOriginalSize = document.getElementById('statOriginalSize');
+    const statBase64Size = document.getElementById('statBase64Size');
+    const statInflation = document.getElementById('statInflation');
+    const statChars = document.getElementById('statChars');
+
+    statOriginalSize.textContent = formatFileSize(originalSize);
+    statBase64Size.textContent = formatFileSize(b64Length);
+    statChars.textContent = b64Length.toLocaleString();
+
+    if (originalSize > 0) {
+        const diff = b64Length - originalSize;
+        const percent = Math.round((diff / originalSize) * 100);
+        statInflation.textContent = `+${percent}%`;
+    } else {
+        statInflation.textContent = '0%';
+    }
+
+    encodeStats.style.display = 'grid';
+}
+
+function handleKeyboardShortcuts(e) {
+    if (!e.altKey) return;
+    const code = e.code;
+    
+    if (code === 'KeyE') {
+        e.preventDefault();
+        const tab = document.querySelector('.tab-button[data-tab="encode"]');
+        if (tab) tab.click();
+    } else if (code === 'KeyD') {
+        e.preventDefault();
+        const tab = document.querySelector('.tab-button[data-tab="decode"]');
+        if (tab) tab.click();
+    } else if (code === 'KeyH') {
+        e.preventDefault();
+        const tab = document.querySelector('.tab-button[data-tab="history"]');
+        if (tab) tab.click();
+    } else if (code === 'KeyC') {
+        e.preventDefault();
+        const activeTab = document.querySelector('.tab-button.active');
+        if (!activeTab) return;
+
+        const tabName = activeTab.dataset.tab;
+        if (tabName === 'encode') {
+            const copyBtn = document.getElementById('copyEncoded');
+            if (copyBtn && copyBtn.style.display !== 'none') {
+                copyBtn.click();
+            } else {
+                showToast('Nothing to copy in Encode section', 'info');
+            }
+        } else if (tabName === 'decode') {
+            const copyDecodedTextBtn = document.getElementById('copyDecodedTextBtn');
+            const copyDecodedBtn = document.getElementById('copyDecoded');
+            
+            if (copyDecodedTextBtn && copyDecodedTextBtn.style.display !== 'none') {
+                copyDecodedTextBtn.click();
+            } else if (copyDecodedBtn && copyDecodedBtn.style.display !== 'none') {
+                copyDecodedBtn.click();
+            } else {
+                showToast('Nothing to copy in Decode section', 'info');
+            }
+        }
+    }
+}
+
+function exportHistoryLogs() {
+    if (!history || history.length === 0) {
+        showToast('No history items to export', 'error');
+        return;
+    }
+    try {
+        const dataStr = JSON.stringify(history, null, 2);
+        const blob = new Blob([dataStr], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'base64_buddy_history.json';
+        a.click();
+        URL.revokeObjectURL(url);
+        showToast('History logs exported!', 'success');
+    } catch (e) {
+        showToast('Export failed', 'error');
+    }
 }

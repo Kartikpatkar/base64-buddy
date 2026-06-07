@@ -8,16 +8,21 @@
     <link rel="stylesheet" href="index.css">
     <!-- Add Font Awesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Material Symbols -->
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" />
 </head>
 
 <body>
-    <div id="successMessage" class="toast"></div>
-    <div id="errorMessage" class="toast"></div>
     <div class="container">
-        <label class="theme-toggle">
-            <input type="checkbox" id="themeSwitch">
-            <span>🌙</span>
-        </label>
+        <div class="header-actions">
+            <button id="helpButton" class="action-icon-btn" title="Keyboard Shortcuts">
+                <span class="material-symbols-outlined">help</span>
+            </button>
+            <label class="theme-toggle">
+                <input type="checkbox" id="themeSwitch">
+                <span class="material-symbols-outlined" id="themeIcon">dark_mode</span>
+            </label>
+        </div>
 
         <header class="header">
             <h1>Base64 Buddy</h1>
@@ -27,15 +32,21 @@
         <div class="main-card">
             <!-- Tabs -->
             <nav class="tabs">
-                <button class="tab-button active" data-tab="encode"> 📤 Encode </button>
-                <button class="tab-button" data-tab="decode"> 📥 Decode </button>
-                <button class="tab-button" data-tab="history"> 📋 History </button>
+                <button class="tab-button active" data-tab="encode">
+                    <span class="material-symbols-outlined">upload</span> Encode
+                </button>
+                <button class="tab-button" data-tab="decode">
+                    <span class="material-symbols-outlined">download</span> Decode
+                </button>
+                <button class="tab-button" data-tab="history">
+                    <span class="material-symbols-outlined">history</span> History
+                </button>
             </nav>
 
             <!-- Encode Section -->
             <section id="encodeSection" class="section active">
                 <div id="encodeDrop" class="drop-zone">
-                    <span class="drop-zone-icon">📁</span>
+                    <span class="material-symbols-outlined drop-zone-icon" style="font-size: 3.5rem;">folder_open</span>
                     <div class="drop-zone-text">Click or drop file here to encode</div>
                     <div class="drop-zone-subtext">Supports images, documents, and more</div>
                 </div>
@@ -47,15 +58,34 @@
                         <textarea id="base64Output" placeholder="Base64 output..."></textarea>
                         <div class="floating-buttons">
                             <button id="dataUriToggle" class="copy-btn" title="Toggle Data URI">
-                                🖇️
+                                <span class="material-symbols-outlined">link</span>
                                 <span class="tooltip">Add Data URI</span>
                             </button>
                             <button id="copyEncoded" class="copy-btn" title="Copy Base64">
-                                📋
+                                <span class="material-symbols-outlined">content_copy</span>
                                 <span class="tooltip">Copy Base64</span>
                             </button>
                         </div>
+                    </div>
 
+                    <!-- Statistics Panel -->
+                    <div id="encodeStats" class="stats-panel" style="display: none;">
+                        <div class="stat-item">
+                            <strong>Original Size</strong>
+                            <span id="statOriginalSize" class="stat-value">-</span>
+                        </div>
+                        <div class="stat-item">
+                            <strong>Base64 Size</strong>
+                            <span id="statBase64Size" class="stat-value">-</span>
+                        </div>
+                        <div class="stat-item">
+                            <strong>Inflation</strong>
+                            <span id="statInflation" class="stat-value">-</span>
+                        </div>
+                        <div class="stat-item">
+                            <strong>Characters</strong>
+                            <span id="statChars" class="stat-value">-</span>
+                        </div>
                     </div>
 
                 </div>
@@ -83,6 +113,7 @@
                     </div>
                 </div>
                 <div class="actions">
+                    <button id="downloadEncoded" class="btn"><span class="material-symbols-outlined">download</span> Download Base64</button>
                     <button id="clearEncode" class="btn btn-danger">Clear Data</button>
                 </div>
 
@@ -91,7 +122,7 @@
             <!-- Decode Section -->
             <section id="decodeSection" class="section">
                 <div id="decodeDrop" class="drop-zone">
-                    <span class="drop-zone-icon">📄</span>
+                    <span class="material-symbols-outlined drop-zone-icon" style="font-size: 3.5rem;">description</span>
                     <div class="drop-zone-text">Click or drop text file with Base64</div>
                     <div class="drop-zone-subtext">Or paste Base64 content below</div>
                 </div>
@@ -103,11 +134,11 @@
                         <textarea id="base64Input" placeholder="Paste Base64 here..."></textarea>
                         <div class="floating-buttons">
                             <button id="decodeDataUriToggle" class="copy-btn" title="Toggle Data URI">
-                                🖇️
+                                <span class="material-symbols-outlined">link</span>
                                 <span class="tooltip">Add Data URI</span>
                             </button>
                             <button class="copy-btn" id="copyDecoded">
-                                📋
+                                <span class="material-symbols-outlined">content_copy</span>
                                 <span class="tooltip">Copy Decoded</span>
                             </button>
                         </div>
@@ -153,9 +184,18 @@
 
             <!-- History Section -->
             <section id="historySection" class="section">
-                <div class="actions" style="margin-bottom: 30px;">
+                <div class="actions" style="margin-bottom: 20px; display: flex; gap: 10px;">
+                    <button id="exportHistory" class="btn btn-secondary">
+                        <span class="material-symbols-outlined">download</span> Export History
+                    </button>
                     <button id="clearHistory" class="btn btn-danger">Clear History</button>
                 </div>
+
+                <!-- History Search Bar -->
+                <div class="form-group" style="margin-bottom: 20px;">
+                    <input type="text" id="historySearch" placeholder="Search history by filename or type..." style="font-family: inherit; font-size: 0.95rem; padding: 10px 14px;">
+                </div>
+
                 <div id="historyList">
                     <div class="preview-placeholder">No history items yet</div>
                 </div>
@@ -176,7 +216,7 @@
             <!-- Author name and credit -->
             <div class="footer-info-row">
                 <div class="footer-author">
-                    <i class="fas fa-code"></i> Created with ❤️ by <span id="authorDisplay">Kartik Patkar</span>
+                    <i class="fas fa-code"></i> Created with <span class="material-symbols-outlined" style="font-size: 16px; color: #ef4444; vertical-align: middle;">favorite</span> by <span id="authorDisplay">Kartik Patkar</span>
                 </div>
             </div>
 
@@ -206,7 +246,44 @@
         </div>
     </footer>
 
-    <script src="../utils/base64.js"></script>
+    <!-- Help Modal -->
+    <div id="helpModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Keyboard Shortcuts Guide</h3>
+                <span class="close-btn material-symbols-outlined" id="closeHelpModal">close</span>
+            </div>
+            <div class="modal-body">
+                <table class="shortcuts-table">
+                    <thead>
+                        <tr>
+                            <th>Action</th>
+                            <th>Shortcut</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>Switch to Encode Tab</td>
+                            <td><kbd>Alt</kbd> + <kbd>E</kbd> (or <kbd>Option</kbd> + <kbd>E</kbd>)</td>
+                        </tr>
+                        <tr>
+                            <td>Switch to Decode Tab</td>
+                            <td><kbd>Alt</kbd> + <kbd>D</kbd> (or <kbd>Option</kbd> + <kbd>D</kbd>)</td>
+                        </tr>
+                        <tr>
+                            <td>Switch to History Tab</td>
+                            <td><kbd>Alt</kbd> + <kbd>H</kbd> (or <kbd>Option</kbd> + <kbd>H</kbd>)</td>
+                        </tr>
+                        <tr>
+                            <td>Copy Tab Output (Encode/Decode)</td>
+                            <td><kbd>Alt</kbd> + <kbd>C</kbd> (or <kbd>Option</kbd> + <kbd>C</kbd>)</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
     <script type="module" src="index.js"></script>
 </body>
 

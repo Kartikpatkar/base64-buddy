@@ -29,26 +29,30 @@ It’s built to be fast, intuitive, and visually consistent across devices, with
 ## 🚀 Features
 
 ### 🔹 Image & Text Encoding
-- Upload any image file (JPG, PNG, GIF, etc.) or enter text manually  
-- Instantly convert to Base64 format  
-- Displays real-time **file details** (name, size, type, dimensions)  
-- Responsive **image preview** with correct aspect ratio  
-- Copy Base64 output with one click  
-- Clear data option to reset everything cleanly
+- **File Upload & Drag-and-Drop**: Load any file (images, documents, archives, multimedia) instantly.
+- **Instant Base64 Conversion**: Converts files to clean Base64 or Data URI format immediately.
+- **Global Clipboard Paste**: Press `Ctrl+V` / `Cmd+V` from anywhere to paste screenshots or files, auto-navigate to the Encode tab, and encode them instantly.
+- **Payload & Size Statistics**: Real-time stats panel showing original size, Base64 size, percentage inflation, and exact character counts.
+- **Download to Text**: Save the output Base64 payload directly as `_base64.txt`.
+- **Dynamic Previews**: Displays image content and complete file properties (name, size, type, resolution, depth).
+- **Visual Feedback**: Copy buttons animate state (`📋 Copy` -> `✅ Copied` in vibrant green for 2 seconds).
 
 ### 🔹 Image & Text Decoding
-- Paste Base64 string or upload `.txt` files containing encoded data  
-- Auto-detects and decodes Base64 into image or text  
-- Displays decoded **image preview and metadata**  
-- Error handling and visual toasts for invalid data  
-- Clear data option to start fresh
+- **Automatic MIME Detection**: Extended binary parser that reads byte signatures for PNG, JPEG, GIF, SVG, WebP, PDF, BMP, ICO, ZIP, MP3, and MP4.
+- **Interactive Decoded Preview**: Auto-renders plaintext contents (TXT, JSON, XML, HTML, CSV, SVG) in a monospace viewer instead of a raw download prompt.
+- **JSON Format & Compress**: Format JSON structures with a built-in `Beautify JSON` / `Minify JSON` toggle.
+- **Instant Binary Downloads**: Decodes files back to original binary state, automatically offering download links with proper filename extensions.
+- **Real-Time History Search**: Added a search input above history lists to filter logs dynamically by filename or type.
+- **Logs Exporter Utility**: Export past histories into a downloadable local JSON file.
+- **One-Click Actions**: Quick copy buttons and clean interface reset buttons.
 
 ### 🔹 Smart UI/UX
-- Fully **mobile responsive** preview and layout  
-- Intuitive tab switching for Encode / Decode modes  
-- Real-time toast notifications for user feedback  
-- Modern dark-themed interface  
-- Detailed footer with author info and social links
+- **Modern Vector Theme**: Beautiful UI powered by **Google Material Symbols (Outlined)** icons.
+- **Header Actions & Help Guide**: Added a Help guide dialog overlay displaying user shortcut commands.
+- **Keyboard Shortcuts Navigation**: Switch tabs instantly using `Alt+E` (Encode), `Alt+D` (Decode), `Alt+H` (History), and quick-copy active outputs using `Alt+C`.
+- **Vibrant Aesthetic**: Smooth linear gradients and micro-animations with standard Inter typography.
+- **Light/Dark Toggle**: Implements modern theme states with persistent local preferences.
+- **Mobile Responsive**: Fully adaptive grids and side-by-side previews for small screen sizes.
 
 ---
 
@@ -58,14 +62,14 @@ It’s built to be fast, intuitive, and visually consistent across devices, with
 
 ### 🔷 Light Mode
 
-![Light Mode - Icon Browser](./assets/base64-buddy-encode.png)
-![Light Mode - Icon Browser](./assets/base64-buddy-encode-file.png)
-![Light Mode - Icon Details](./assets/base64-buddy-decode-view.png)
-![Light Mode - Icon Details](./assets/base64-buddy-history-view.png)
+![Light Mode - Encode Tab](./assets/base64-buddy-encode.png)
+![Light Mode - Encode File](./assets/base64-buddy-encode-file.png)
+![Light Mode - Decode View](./assets/base64-buddy-decode-view.png)
+![Light Mode - History View](./assets/base64-buddy-history-view.png)
 
 ### 🌑 Dark Mode
 
-![Dark Mode - Icon Browser](./assets/base64-buddy-dark-theme-view.png)
+![Dark Mode - Encode View](./assets/base64-buddy-dark-theme-view.png)
 
 ---
 
@@ -75,7 +79,7 @@ It’s built to be fast, intuitive, and visually consistent across devices, with
 |--------|-------------|
 | **Frontend** | HTML5, CSS3, JavaScript (ES6 Modules) |
 | **Design** | Custom CSS, Flexbox, Grid, Mobile Responsive Layout |
-| **Storage** | `localStorage` (for history retention) |
+| **Storage** | `chrome.storage.local` (for history/theme retention) |
 | **Icons** | Font Awesome |
 
 ---
@@ -95,7 +99,7 @@ Once installed:
 
 ### 🔧 Option 2: Load Base64 Buddy Manually in Chrome
 
-Until it's available in the Chrome Web Store, you can load SLDS Icons Kit manually for development or testing:
+Until it's available in the Chrome Web Store, you can load Base64 Buddy manually for development or testing:
 
 1. **Clone or Download this Repository:**
 
@@ -121,8 +125,8 @@ Until it's available in the Chrome Web Store, you can load SLDS Icons Kit manual
 
 5. **Done!**
 
-   - You’ll now see Base64 Buddy in your extensions bar.
-   - Click the icon to launch and start generating Apex!
+    - You’ll now see Base64 Buddy in your extensions bar.
+    - Click the icon to launch the extension!
 
 ---
 
@@ -148,5 +152,5 @@ MIT License – free to use, modify, and distribute.
 
 ---
 
-> Built for Salesforce developers, by Salesforce developers.  
-> Icon Kit helps you make better Salesforce Components, faster!
+> Built for developers, by developers.  
+> Base64 Buddy helps you encode and decode files seamlessly!

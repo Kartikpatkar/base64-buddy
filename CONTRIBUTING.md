@@ -40,16 +40,19 @@ We accept pull requests for:
 
 ## 🚀 Getting Started
 
-To set up the project locally:
+To set up the project locally for testing and development:
 
-```bash
-git clone https://github.com/Kartikpatkar/base64-buddy.git
-cd SLDS Icons Kit
-npm install
-npm run dev
-```
+1. **Clone the repository:**
+   ```bash
+   git clone https://github.com/Kartikpatkar/base64-buddy.git
+   cd base64-buddy
+   ```
 
-Open Chrome → `chrome://extensions/` → Enable Developer Mode → Load unpacked → Select the `/dist` folder after build.
+2. **Load the extension in Chrome:**
+   - Open Chrome and navigate to `chrome://extensions/`.
+   - Enable **Developer mode** using the toggle switch in the top right corner.
+   - Click the **Load unpacked** button.
+   - Select the root directory of the project (the folder containing `manifest.json`).
 
 ---
 
@@ -62,10 +65,7 @@ Open Chrome → `chrome://extensions/` → Enable Developer Mode → Load unpack
 
 2. Make your changes with clear and descriptive commits.
 
-3. Run a local test build to ensure everything works:
-   ```bash
-   npm run build
-   ```
+3. Run local verification checks to ensure everything works as expected.
 
 4. Submit your pull request with:
    - A clear title and description
@@ -76,10 +76,10 @@ Open Chrome → `chrome://extensions/` → Enable Developer Mode → Load unpack
 
 ## 🧪 Testing Guidelines (Optional)
 
-If your feature involves Apex output, please manually test:
-- With nested and flat JSON
-- With arrays, mixed data types, and null values
-- With/without optional toggles enabled
+Please manually verify your changes:
+- Verify that encoding and decoding function correctly with both text and binary formats.
+- Check that large files do not crash or freeze the preview panel.
+- Ensure that both light and dark modes render correctly.
 
 ---
 
