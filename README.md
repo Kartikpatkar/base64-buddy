@@ -42,10 +42,14 @@ It’s built to be fast, intuitive, and visually consistent across devices, with
 - **Interactive Decoded Preview**: Auto-renders plaintext contents (TXT, JSON, XML, HTML, CSV, SVG) in a monospace viewer instead of a raw download prompt.
 - **JSON Format & Compress**: Format JSON structures with a built-in `Beautify JSON` / `Minify JSON` toggle.
 - **Instant Binary Downloads**: Decodes files back to original binary state, automatically offering download links with proper filename extensions.
+- **Real-Time History Search**: Added a search input above history lists to filter logs dynamically by filename or type.
+- **Logs Exporter Utility**: Export past histories into a downloadable local JSON file.
 - **One-Click Actions**: Quick copy buttons and clean interface reset buttons.
 
 ### 🔹 Smart UI/UX
 - **Modern Vector Theme**: Beautiful UI powered by **Google Material Symbols (Outlined)** icons.
+- **Header Actions & Help Guide**: Added a Help guide dialog overlay displaying user shortcut commands.
+- **Keyboard Shortcuts Navigation**: Switch tabs instantly using `Alt+E` (Encode), `Alt+D` (Decode), `Alt+H` (History), and quick-copy active outputs using `Alt+C`.
 - **Vibrant Aesthetic**: Smooth linear gradients and micro-animations with standard Inter typography.
 - **Light/Dark Toggle**: Implements modern theme states with persistent local preferences.
 - **Mobile Responsive**: Fully adaptive grids and side-by-side previews for small screen sizes.

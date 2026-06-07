@@ -14,10 +14,14 @@ Encode and decode files in Base64 directly within your browser. Clean, fast, mob
 Base64 Buddy is a modern, privacy-focused Chrome Extension that allows developers and designers to encode and decode files into Base64 format directly within the browser.
 
 Features include:
-- File Encoding: Drag, drop, or select files (images, documents, PDFs) to instantly convert them to Base64 format.
+- File Encoding: Drag, drop, or select files (images, archives, media) to instantly convert them to Base64 format.
 - File Decoding: Paste Base64 content or select a .txt file containing Base64 text to decode back to original files.
-- Smart MIME Type Auto-Detection: Automatically parses common base64 headers for SVG, PNG, JPEG, GIF, WebP, PDF, BMP, and ICO to show correct previews.
-- Plaintext Text Preview: Renders decoded plaintext files (JSON, HTML, text configs) directly in a scrollable viewer with a quick Copy Text button.
+- Smart MIME Type Auto-Detection: Automatically parses common base64 headers for ZIP, MP3, MP4, JSON, XML, HTML, SVG, PNG, JPEG, GIF, WebP, PDF, BMP, and ICO.
+- Plaintext Text Preview: Renders decoded plaintext files (JSON, HTML, XML, CSV, text configs) directly in a scrollable viewer with quick Copy and Beautify JSON buttons.
+- Global Clipboard Paste: Press `Ctrl+V` / `Cmd+V` from anywhere to paste screenshots or files, auto-navigate to the Encode tab, and encode them instantly.
+- Detailed Size & Character Statistics: Displays original size, Base64 size, percentage payload inflation, and exact character counts.
+- Keyboard Shortcuts: Integrated quick navigation and commands: `Alt+E` (Encode), `Alt+D` (Decode), `Alt+H` (History), and `Alt+C` (Copy Output). Includes a built-in guide modal.
+- Real-Time History Search & Export: Added a search input above history lists to filter logs dynamically, and an Export button to save logs as JSON files.
 - Local Extension Storage: Asynchronously retains your theme selections and history locally using chrome.storage.local without blocking performance.
 - Download Options: Save Base64 encodings as .txt files or download decoded binary items with custom filenames.
 - Rich UI Aesthetics: Fully responsive layout with custom light/dark theme adaptation utilizing Google Material Symbols Outlined icons.
