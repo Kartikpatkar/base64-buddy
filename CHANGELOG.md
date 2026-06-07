@@ -6,9 +6,13 @@ All notable changes to this project are documented in this file.
 
 ### Added
 - **Google Material Symbols (Outlined)**: Swapped out all system emojis with polished vector icons for a premium UI aesthetic.
-- **Plaintext Decoded Preview**: Added an auto-rendering plaintext preview textarea with a quick "Copy Text" button for decoded textual strings (JSON, HTML, etc.).
+- **Plaintext Decoded Preview**: Added an auto-rendering plaintext preview textarea with a quick "Copy Text" button for decoded textual strings (TXT, JSON, XML, HTML, CSV, SVG).
+- **JSON Beautifier & Minifier Toggle**: Added formatting utility directly inside the plaintext preview box to format or compress decoded JSON structures.
+- **Global Clipboard File Paste**: Integrated global paste (`Ctrl+V` / `Cmd+V`) file handling that automatically shifts focus to the Encode tab, generates previews, computes size/char metrics, and runs Base64 encoding.
+- **Detailed Size & Character Statistics**: Introduced a grid statistics panel showing original size, Base64 size, percentage payload inflation, and base64 character counts.
+- **Copy Success Animations**: Animated all copy button feedback visually (`📋 Copy` -> `✅ Copied` in vibrant green for 2 seconds).
 - **Download Encoded Base64 File**: Added a button under the Encode tab actions that downloads generated Base64 strings directly as `[filename]_base64.txt`.
-- **MIME Type Auto-Detection**: Implemented a base64 signature parser (`detectMimeTypeFromBase64`) matching PNG, JPEG, GIF, SVG, WebP, PDF, BMP, and ICO.
+- **MIME Type Auto-Detection**: Implemented an advanced base64 signature parser matching PNG, JPEG, GIF, SVG, WebP, PDF, BMP, ICO, ZIP, MP3, and MP4.
 - **Data URI Auto-Detection**: Paste standard base64 strings containing Data URIs and the extension will automatically highlight and toggle the URI settings.
 
 ### Changed

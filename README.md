@@ -29,30 +29,26 @@ It’s built to be fast, intuitive, and visually consistent across devices, with
 ## 🚀 Features
 
 ### 🔹 Image & Text Encoding
-- Upload any file (images, documents, PDFs) or enter text manually  
-- Instantly convert to Base64 format  
-- Download the generated Base64 output as a text file (`_base64.txt`)  
-- Displays real-time **file details** (name, size, type, dimensions)  
-- Responsive **image preview** with correct aspect ratio  
-- Copy Base64 output with one click  
-- Clear data option to reset everything cleanly
+- **File Upload & Drag-and-Drop**: Load any file (images, documents, archives, multimedia) instantly.
+- **Instant Base64 Conversion**: Converts files to clean Base64 or Data URI format immediately.
+- **Global Clipboard Paste**: Press `Ctrl+V` / `Cmd+V` from anywhere to paste screenshots or files, auto-navigate to the Encode tab, and encode them instantly.
+- **Payload & Size Statistics**: Real-time stats panel showing original size, Base64 size, percentage inflation, and exact character counts.
+- **Download to Text**: Save the output Base64 payload directly as `_base64.txt`.
+- **Dynamic Previews**: Displays image content and complete file properties (name, size, type, resolution, depth).
+- **Visual Feedback**: Copy buttons animate state (`📋 Copy` -> `✅ Copied` in vibrant green for 2 seconds).
 
 ### 🔹 Image & Text Decoding
-- Paste Base64 string or upload `.txt` files containing encoded data  
-- Auto-detects and decodes Base64 into image or text  
-- Smart **MIME type auto-detection** based on file signatures (PNG, JPEG, GIF, SVG, WebP, PDF, BMP, ICO)  
-- Plaintext **decoded preview** for textual files (JSON, HTML, XML, configurations) inside a scrollable textarea with a copy button  
-- Displays decoded **image preview and metadata**  
-- Error handling and visual toasts for invalid data  
-- Clear data option to start fresh
+- **Automatic MIME Detection**: Extended binary parser that reads byte signatures for PNG, JPEG, GIF, SVG, WebP, PDF, BMP, ICO, ZIP, MP3, and MP4.
+- **Interactive Decoded Preview**: Auto-renders plaintext contents (TXT, JSON, XML, HTML, CSV, SVG) in a monospace viewer instead of a raw download prompt.
+- **JSON Format & Compress**: Format JSON structures with a built-in `Beautify JSON` / `Minify JSON` toggle.
+- **Instant Binary Downloads**: Decodes files back to original binary state, automatically offering download links with proper filename extensions.
+- **One-Click Actions**: Quick copy buttons and clean interface reset buttons.
 
 ### 🔹 Smart UI/UX
-- Modern vector interface styled with **Google Material Symbols**  
-- Fully **mobile responsive** preview and layout  
-- Intuitive tab switching for Encode / Decode modes  
-- Real-time toast notifications for user feedback  
-- Modern dark-themed interface  
-- Detailed footer with author info and social links
+- **Modern Vector Theme**: Beautiful UI powered by **Google Material Symbols (Outlined)** icons.
+- **Vibrant Aesthetic**: Smooth linear gradients and micro-animations with standard Inter typography.
+- **Light/Dark Toggle**: Implements modern theme states with persistent local preferences.
+- **Mobile Responsive**: Fully adaptive grids and side-by-side previews for small screen sizes.
 
 ---
 

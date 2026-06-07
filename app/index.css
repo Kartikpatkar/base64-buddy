@@ -935,3 +935,66 @@ body.dark .decoded-text-area {
     align-items: center;
     justify-content: center;
 }
+
+/* -------------------------------
+   Statistics Panel Styling
+------------------------------- */
+.stats-panel {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+    gap: 15px;
+    margin-top: 15px;
+    padding: 15px;
+    background: #f8fafc;
+    border: 1px solid #cbd5e1;
+    border-radius: 12px;
+    box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.02);
+    transition: all 0.3s ease;
+}
+
+body.dark .stats-panel {
+    background: #232323;
+    border-color: #444;
+    box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+.stat-item {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.stat-item strong {
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: #64748b;
+}
+
+body.dark .stat-item strong {
+    color: #94a3b8;
+}
+
+.stat-value {
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: #1e293b;
+    font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+}
+
+body.dark .stat-value {
+    color: #f1f5f9;
+}
+
+/* -------------------------------
+   Copy Button Visual Success State
+------------------------------- */
+.copy-btn.copied {
+    background-color: #10b981 !important;
+    color: white !important;
+}
+
+.btn.copied {
+    background: linear-gradient(135deg, #10b981, #059669) !important;
+    box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3) !important;
+}

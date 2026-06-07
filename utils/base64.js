@@ -50,32 +50,64 @@ export function detectMimeTypeFromBase64(base64) {
         if (match) return match[1];
     }
 
-    const cleanB64 = base64.trim().replace(/^data:.*?;base64,/, '');
-    const prefix = cleanB64.slice(0, 16);
+    const cleanB64 = base64.trim().replace(/^data:.*?;base64,/, '').replace(/\s/g, '');
+    if (!cleanB64) return 'application/octet-stream';
 
-    // PNG: iVBORw0KG
+    // 1. Check known base64 string prefix shortcuts first (fast paths)
+    const prefix = cleanB64.slice(0, 16);
     if (prefix.startsWith('iVBORw0KG')) return 'image/png';
-    
-    // JPEG: /9j/
     if (prefix.startsWith('/9j/')) return 'image/jpeg';
-    
-    // GIF: R0lGOD
     if (prefix.startsWith('R0lGOD')) return 'image/gif';
-    
-    // SVG: PHN2Zy (starts with <svg) or PD94bWwg (starts with <?xml)
-    if (prefix.startsWith('PHN2Zy') || prefix.startsWith('PD94bWwg')) return 'image/svg+xml';
-    
-    // WebP: UklGR
     if (prefix.startsWith('UklGR')) return 'image/webp';
-    
-    // PDF: JVBERi
     if (prefix.startsWith('JVBERi')) return 'application/pdf';
-    
-    // BMP: Qk0
     if (prefix.startsWith('Qk0')) return 'image/bmp';
-    
-    // ICO: AAABAA
     if (prefix.startsWith('AAABAA')) return 'image/x-icon';
+
+    // 2. Decode the first 64-80 characters safely to detect binary & text signatures
+    try {
+        const len = Math.floor(Math.min(cleanB64.length, 80) / 4) * 4;
+        if (len > 0) {
+            const decodedPrefix = atob(cleanB64.slice(0, len));
+            const trimmed = decodedPrefix.trim();
+            
+            // Check structured text documents
+            if (trimmed.startsWith('{') || trimmed.startsWith('[')) return 'application/json';
+            if (trimmed.toLowerCase().startsWith('<!doctype html') || trimmed.toLowerCase().startsWith('<html')) return 'text/html';
+            if (trimmed.startsWith('<?xml') || trimmed.startsWith('<xml')) {
+                if (trimmed.includes('<svg')) return 'image/svg+xml';
+                return 'application/xml';
+            }
+            if (trimmed.startsWith('<svg') || trimmed.includes('<svg')) return 'image/svg+xml';
+
+            // Check binary signatures in decoded prefix
+            // ZIP: PK\x03\x04
+            if (decodedPrefix.startsWith('PK\x03\x04')) return 'application/zip';
+            
+            // BMP: BM
+            if (decodedPrefix.startsWith('BM')) return 'image/bmp';
+
+            // ICO: \x00\x00\x01\x00
+            if (decodedPrefix.startsWith('\x00\x00\x01\x00')) return 'image/x-icon';
+
+            // MP4 box "ftyp" check
+            if (decodedPrefix.includes('ftyp')) return 'video/mp4';
+
+            // MP3: ID3 or frame sync
+            if (decodedPrefix.startsWith('ID3') || 
+                decodedPrefix.startsWith('\xFF\xFB') || 
+                decodedPrefix.startsWith('\xFF\xF3') || 
+                decodedPrefix.startsWith('\xFF\xF2')) {
+                return 'audio/mpeg';
+            }
+        }
+    } catch (e) {
+        // Fallback to raw string checks
+    }
+
+    // Secondary raw string checks as fallback
+    if (prefix.startsWith('PHN2Zy') || prefix.startsWith('PD94bWwg')) return 'image/svg+xml';
+    if (prefix.startsWith('UEsDBB')) return 'application/zip';
+    if (prefix.startsWith('SUQz')) return 'audio/mpeg';
 
     return 'application/octet-stream';
 }

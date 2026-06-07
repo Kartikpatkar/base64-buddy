@@ -1,11 +1,30 @@
 import * as CONSTANTS from '../utils/constants.js';
 import { encodeFileToBase64, decodeBase64ToBlob, detectMimeTypeFromBase64 } from '../utils/base64.js';
 // -------------------------------
-// State
+// State & Constants
 // -------------------------------
 let currentFile = null;
 let decodedObjectUrl = null;
 let history = [];
+
+const MIME_TO_EXTENSION = {
+    'application/pdf': 'pdf',
+    'application/zip': 'zip',
+    'application/json': 'json',
+    'application/xml': 'xml',
+    'text/html': 'html',
+    'image/svg+xml': 'svg',
+    'audio/mpeg': 'mp3',
+    'video/mp4': 'mp4',
+    'image/x-icon': 'ico',
+    'image/bmp': 'bmp',
+    'text/plain': 'txt',
+    'text/csv': 'csv',
+    'image/png': 'png',
+    'image/jpeg': 'jpg',
+    'image/gif': 'gif',
+    'image/webp': 'webp'
+};
 
 // -------------------------------
 // Initialize
@@ -28,6 +47,32 @@ document.addEventListener('DOMContentLoaded', async () => {
             }, 100);
         });
     }
+
+    // Input handler for manual output changes
+    const base64Output = document.getElementById('base64Output');
+    if (base64Output) {
+        base64Output.addEventListener('input', () => {
+            if (!base64Output.value.trim()) {
+                const encodeStats = document.getElementById('encodeStats');
+                if (encodeStats) encodeStats.style.display = 'none';
+            } else {
+                const estimatedOriginal = Math.floor(base64Output.value.length * 0.75);
+                updateEncodeStats(estimatedOriginal, base64Output.value.length);
+            }
+        });
+    }
+
+    // Global paste handler for file/image pasting
+    window.addEventListener('paste', e => {
+        if (e.clipboardData.files && e.clipboardData.files.length > 0) {
+            e.preventDefault();
+            const file = e.clipboardData.files[0];
+            const encodeTabBtn = document.querySelector('.tab-button[data-tab="encode"]');
+            if (encodeTabBtn) encodeTabBtn.click();
+            processFile(file);
+        }
+    });
+
     document.getElementById('currentYear').textContent = new Date().getFullYear();
     initFooter();
 });
@@ -168,7 +213,10 @@ function setupFloatingButton(textarea, button) {
     button.addEventListener('click', () => {
         if (!textarea.value) return;
         navigator.clipboard.writeText(textarea.value)
-            .then(() => showToast('Copied to clipboard!', 'success'))
+            .then(() => {
+                showToast('Copied to clipboard!', 'success');
+                animateCopyButton(button);
+            })
             .catch(() => showToast('Copy failed', 'error'));
     });
 }
@@ -255,6 +303,7 @@ function processFile(file) {
         showPreview(file, base64WithUri);
         addToHistory('encode', file.name, output);
         updateFloatingButton('base64Output', 'copyEncoded');
+        updateEncodeStats(file.size, output.length);
         showToast('File encoded successfully!', 'success');
     }).catch((error) => {
         console.error(error);
@@ -295,7 +344,6 @@ function showPreview(file, base64) {
         previewContent.innerHTML = `
             <div style="text-align: center; margin-bottom: 8px;"><span class="material-symbols-outlined" style="font-size: 3rem; color: #64748b;">description</span></div>
             <div style="text-align: center;"><strong>${file.name}</strong></div>
-            <div style="text-align: center; color: #64748b;">${formatFileSize(file.size)}</div>
         `;
 
         document.getElementById('fileName').textContent = file.name;
@@ -395,7 +443,7 @@ function showDecodedPreview(base64, filename) {
 
     try {
         const mimeType = base64.startsWith('data:') ? base64.split(':')[1].split(';')[0] : 'application/octet-stream';
-        const extension = mimeType.split('/')[1] || 'bin';
+        const extension = MIME_TO_EXTENSION[mimeType] || mimeType.split('/')[1] || 'bin';
 
         const blob = decodeBase64ToBlob(base64);
         const size = formatFileSize(blob.size);
@@ -406,7 +454,7 @@ function showDecodedPreview(base64, filename) {
         }
         decodedObjectUrl = URL.createObjectURL(blob);
 
-        if (mimeType.startsWith('image/')) {
+        if (mimeType.startsWith('image/') && mimeType !== 'image/svg+xml') {
             const img = new Image();
             img.onload = () => {
                 previewContent.appendChild(img);
@@ -440,18 +488,62 @@ function showDecodedPreview(base64, filename) {
                     previewContent.innerHTML = `
                         <div class="text-preview-container" style="width: 100%; display: flex; flex-direction: column; gap: 8px;">
                             <textarea id="decodedTextOutput" readonly class="decoded-text-area" style="width: 100%; min-height: 120px; font-family: monospace; font-size: 0.9rem; resize: vertical;"></textarea>
-                            <button id="copyDecodedTextBtn" class="btn btn-secondary" style="padding: 8px 16px; font-size: 0.9rem; align-self: flex-end; display: inline-flex; align-items: center; gap: 6px;">
-                                <span class="material-symbols-outlined" style="font-size: 1.1rem;">content_copy</span> Copy Text
-                            </button>
+                            <div class="text-preview-actions" style="display: flex; justify-content: flex-end; gap: 10px;">
+                                <button id="beautifyJsonBtn" class="btn btn-secondary" style="padding: 8px 16px; font-size: 0.9rem; display: none; align-items: center; gap: 6px;">
+                                    <span class="material-symbols-outlined" style="font-size: 1.1rem;">format_align_left</span> Beautify JSON
+                                </button>
+                                <button id="copyDecodedTextBtn" class="btn btn-secondary" style="padding: 8px 16px; font-size: 0.9rem; display: inline-flex; align-items: center; gap: 6px;">
+                                    <span class="material-symbols-outlined" style="font-size: 1.1rem;">content_copy</span> Copy Text
+                                </button>
+                            </div>
                         </div>
                     `;
                     const textarea = document.getElementById('decodedTextOutput');
                     textarea.value = text;
-                    document.getElementById('copyDecodedTextBtn').addEventListener('click', () => {
-                        navigator.clipboard.writeText(text)
-                            .then(() => showToast('Decoded text copied!', 'success'))
+
+                    // Setup Copy Event
+                    const copyBtn = document.getElementById('copyDecodedTextBtn');
+                    copyBtn.addEventListener('click', () => {
+                        navigator.clipboard.writeText(textarea.value)
+                            .then(() => {
+                                showToast('Decoded text copied!', 'success');
+                                animateCopyButton(copyBtn);
+                            })
                             .catch(() => showToast('Copy failed', 'error'));
                     });
+
+                    // Setup Beautify JSON Event if it's JSON
+                    const trimmed = text.trim();
+                    let isJson = false;
+                    if ((trimmed.startsWith('{') && trimmed.endsWith('}')) || (trimmed.startsWith('[') && trimmed.endsWith(']'))) {
+                        try {
+                            JSON.parse(trimmed);
+                            isJson = true;
+                        } catch (e) {}
+                    }
+
+                    if (isJson) {
+                        const beautifyBtn = document.getElementById('beautifyJsonBtn');
+                        beautifyBtn.style.display = 'inline-flex';
+                        let formatted = false;
+                        beautifyBtn.addEventListener('click', () => {
+                            try {
+                                const val = textarea.value;
+                                const parsed = JSON.parse(val);
+                                if (!formatted) {
+                                    textarea.value = JSON.stringify(parsed, null, 2);
+                                    beautifyBtn.innerHTML = '<span class="material-symbols-outlined" style="font-size: 1.1rem;">compress</span> Minify JSON';
+                                    formatted = true;
+                                } else {
+                                    textarea.value = JSON.stringify(parsed);
+                                    beautifyBtn.innerHTML = '<span class="material-symbols-outlined" style="font-size: 1.1rem;">format_align_left</span> Beautify JSON';
+                                    formatted = false;
+                                }
+                            } catch (e) {
+                                showToast('Invalid JSON structure', 'error');
+                            }
+                        });
+                    }
                 } else {
                     previewContent.innerHTML = `
                         <div style="text-align: center; margin-bottom: 8px;"><span class="material-symbols-outlined" style="font-size: 3rem; color: #64748b;">description</span></div>
@@ -625,6 +717,11 @@ function initClearButtons() {
             const dataUriToggle = document.getElementById('dataUriToggle');
             dataUriToggle.dataset.active = 'false';
             dataUriToggle.classList.remove('active');
+            
+            // Hide statistics
+            const encodeStats = document.getElementById('encodeStats');
+            if (encodeStats) encodeStats.style.display = 'none';
+
             showToast('Encode section cleared!', 'success');
         });
     }
@@ -670,4 +767,77 @@ function initFooter() {
     document.querySelector('.footer-link.linkedin').href = CONSTANTS.AUTHOR.linkedin;
     document.querySelector('.footer-link.trailhead').href = CONSTANTS.AUTHOR.trailhead;
     document.querySelector('.footer-link.email').href = `mailto:${CONSTANTS.AUTHOR.email}`;
+}
+
+// -------------------------------
+// Helper Functions for New Features
+// -------------------------------
+function animateCopyButton(button) {
+    if (!button) return;
+    const icon = button.querySelector('.material-symbols-outlined');
+    const tooltip = button.querySelector('.tooltip');
+    
+    const hasText = button.textContent.includes('Copy Text') || button.textContent.includes('Copied!');
+    
+    let originalIcon = 'content_copy';
+    if (icon) {
+        originalIcon = icon.textContent;
+        icon.textContent = 'check';
+    }
+    
+    let originalTooltip = '';
+    if (tooltip) {
+        originalTooltip = tooltip.textContent;
+        tooltip.textContent = 'Copied!';
+    }
+    
+    let originalTextNode = null;
+    if (hasText) {
+        for (const child of button.childNodes) {
+            if (child.nodeType === Node.TEXT_NODE && child.textContent.trim()) {
+                originalTextNode = child;
+                child.textContent = ' Copied!';
+                break;
+            }
+        }
+    }
+
+    button.classList.add('copied');
+
+    setTimeout(() => {
+        if (icon) {
+            icon.textContent = originalIcon;
+        }
+        if (tooltip) {
+            tooltip.textContent = originalTooltip;
+        }
+        if (originalTextNode) {
+            originalTextNode.textContent = ' Copy Text';
+        }
+        button.classList.remove('copied');
+    }, 2000);
+}
+
+function updateEncodeStats(originalSize, b64Length) {
+    const encodeStats = document.getElementById('encodeStats');
+    if (!encodeStats) return;
+
+    const statOriginalSize = document.getElementById('statOriginalSize');
+    const statBase64Size = document.getElementById('statBase64Size');
+    const statInflation = document.getElementById('statInflation');
+    const statChars = document.getElementById('statChars');
+
+    statOriginalSize.textContent = formatFileSize(originalSize);
+    statBase64Size.textContent = formatFileSize(b64Length);
+    statChars.textContent = b64Length.toLocaleString();
+
+    if (originalSize > 0) {
+        const diff = b64Length - originalSize;
+        const percent = Math.round((diff / originalSize) * 100);
+        statInflation.textContent = `+${percent}%`;
+    } else {
+        statInflation.textContent = '0%';
+    }
+
+    encodeStats.style.display = 'grid';
 }
