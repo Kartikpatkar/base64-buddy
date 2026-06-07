@@ -58,14 +58,14 @@ It’s built to be fast, intuitive, and visually consistent across devices, with
 
 ### 🔷 Light Mode
 
-![Light Mode - Icon Browser](./assets/base64-buddy-encode.png)
-![Light Mode - Icon Browser](./assets/base64-buddy-encode-file.png)
-![Light Mode - Icon Details](./assets/base64-buddy-decode-view.png)
-![Light Mode - Icon Details](./assets/base64-buddy-history-view.png)
+![Light Mode - Encode Tab](./assets/base64-buddy-encode.png)
+![Light Mode - Encode File](./assets/base64-buddy-encode-file.png)
+![Light Mode - Decode View](./assets/base64-buddy-decode-view.png)
+![Light Mode - History View](./assets/base64-buddy-history-view.png)
 
 ### 🌑 Dark Mode
 
-![Dark Mode - Icon Browser](./assets/base64-buddy-dark-theme-view.png)
+![Dark Mode - Encode View](./assets/base64-buddy-dark-theme-view.png)
 
 ---
 
@@ -75,7 +75,7 @@ It’s built to be fast, intuitive, and visually consistent across devices, with
 |--------|-------------|
 | **Frontend** | HTML5, CSS3, JavaScript (ES6 Modules) |
 | **Design** | Custom CSS, Flexbox, Grid, Mobile Responsive Layout |
-| **Storage** | `localStorage` (for history retention) |
+| **Storage** | `chrome.storage.local` (for history/theme retention) |
 | **Icons** | Font Awesome |
 
 ---
@@ -95,7 +95,7 @@ Once installed:
 
 ### 🔧 Option 2: Load Base64 Buddy Manually in Chrome
 
-Until it's available in the Chrome Web Store, you can load SLDS Icons Kit manually for development or testing:
+Until it's available in the Chrome Web Store, you can load Base64 Buddy manually for development or testing:
 
 1. **Clone or Download this Repository:**
 
@@ -121,8 +121,8 @@ Until it's available in the Chrome Web Store, you can load SLDS Icons Kit manual
 
 5. **Done!**
 
-   - You’ll now see Base64 Buddy in your extensions bar.
-   - Click the icon to launch and start generating Apex!
+    - You’ll now see Base64 Buddy in your extensions bar.
+    - Click the icon to launch the extension!
 
 ---
 
@@ -148,5 +148,5 @@ MIT License – free to use, modify, and distribute.
 
 ---
 
-> Built for Salesforce developers, by Salesforce developers.  
-> Icon Kit helps you make better Salesforce Components, faster!
+> Built for developers, by developers.  
+> Base64 Buddy helps you encode and decode files seamlessly!
