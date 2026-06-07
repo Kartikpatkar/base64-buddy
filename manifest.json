@@ -14,11 +14,5 @@
   },
   "action": {
     "default_title": "Open Base64 Buddy"
-  },
-  "web_accessible_resources": [
-    {
-      "resources": ["app/base64.js"],
-      "matches": ["<all_urls>"]
-    }
-  ]
+  }
 }

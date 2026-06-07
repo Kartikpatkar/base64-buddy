@@ -3,6 +3,7 @@ import * as CONSTANTS from '../utils/constants.js';
 // State
 // -------------------------------
 let currentFile = null;
+let decodedObjectUrl = null;
 let history = JSON.parse(localStorage.getItem('base64History') || '[]');
 
 // -------------------------------
@@ -391,46 +392,65 @@ function showDecodedPreview(base64, filename) {
     const previewContent = preview.querySelector('.preview-content');
     previewContent.innerHTML = ''; // now safe
 
-    const mimeType = base64.startsWith('data:') ? base64.split(':')[1].split(';')[0] : 'application/octet-stream';
-    const extension = mimeType.split('/')[1] || 'bin';
+    try {
+        const mimeType = base64.startsWith('data:') ? base64.split(':')[1].split(';')[0] : 'application/octet-stream';
+        const extension = mimeType.split('/')[1] || 'bin';
 
-    const blob = decodeBase64ToBlob(base64);
-    const size = formatFileSize(blob.size);
+        const blob = decodeBase64ToBlob(base64);
+        const size = formatFileSize(blob.size);
 
-    if (mimeType.startsWith('image/')) {
-        const img = new Image();
-        img.onload = () => {
-            previewContent.appendChild(img);
+        if (decodedObjectUrl) {
+            URL.revokeObjectURL(decodedObjectUrl);
+            decodedObjectUrl = null;
+        }
+        decodedObjectUrl = URL.createObjectURL(blob);
 
-            // Show file info
-            document.getElementById('fileResolution').textContent = `${img.naturalWidth}×${img.naturalHeight}`;
+        if (mimeType.startsWith('image/')) {
+            const img = new Image();
+            img.onload = () => {
+                previewContent.appendChild(img);
+
+                // Show file info
+                document.getElementById('fileResolution').textContent = `${img.naturalWidth}×${img.naturalHeight}`;
+                document.getElementById('fileMimeType').textContent = mimeType;
+                document.getElementById('fileExtension').textContent = extension;
+                document.getElementById('fileSize').textContent = size;
+                document.getElementById('fileDownloadLink').href = decodedObjectUrl;
+                document.getElementById('fileDownloadLink').download = filename;
+                document.getElementById('fileDownloadLink').textContent = filename;
+                document.getElementById('fileBitDepth').textContent = 8;
+                fileInfo.style.display = 'block';
+            };
+            img.onerror = () => {
+                previewContent.innerHTML = `
+                    <div style="font-size: 2rem; text-align: center;">⚠️</div>
+                    <div style="text-align: center; color: #ef4444;"><strong>Failed to load image preview</strong></div>
+                    <div style="text-align: center; color: #64748b; font-size: 0.9rem;">Invalid image data format.</div>
+                `;
+                fileInfo.style.display = 'none';
+            };
+            img.src = base64;
+            img.alt = 'Decoded Preview';
+        } else {
+            previewContent.innerHTML = `
+                <div style="font-size: 2rem; text-align: center;">📄</div>
+                <div style="text-align: center;"><strong>${filename}</strong></div>
+                <div style="text-align: center;">Ready to download</div>
+            `;
+
+            document.getElementById('fileResolution').textContent = '-';
             document.getElementById('fileMimeType').textContent = mimeType;
             document.getElementById('fileExtension').textContent = extension;
             document.getElementById('fileSize').textContent = size;
-            document.getElementById('fileDownloadLink').href = URL.createObjectURL(blob);
+            document.getElementById('fileDownloadLink').href = decodedObjectUrl;
             document.getElementById('fileDownloadLink').download = filename;
             document.getElementById('fileDownloadLink').textContent = filename;
-            document.getElementById('fileBitDepth').textContent = 8;
+            document.getElementById('fileBitDepth').textContent = '-';
             fileInfo.style.display = 'block';
-        };
-        img.src = base64;
-        img.alt = 'Decoded Preview';
-    } else {
-        previewContent.innerHTML = `
-            <div style="font-size: 2rem; text-align: center;">📄</div>
-            <div style="text-align: center;"><strong>${filename}</strong></div>
-            <div style="text-align: center;">Ready to download</div>
-        `;
-
-        document.getElementById('fileResolution').textContent = '-';
-        document.getElementById('fileMimeType').textContent = mimeType;
-        document.getElementById('fileExtension').textContent = extension;
-        document.getElementById('fileSize').textContent = size;
-        document.getElementById('fileDownloadLink').href = URL.createObjectURL(blob);
-        document.getElementById('fileDownloadLink').download = filename;
-        document.getElementById('fileDownloadLink').textContent = filename;
-        document.getElementById('fileBitDepth').textContent = '-';
-        fileInfo.style.display = 'block';
+        }
+    } catch (error) {
+        previewContent.innerHTML = '<div class="preview-placeholder">Enter valid Base64 string to see preview</div>';
+        fileInfo.style.display = 'none';
     }
 }
 
@@ -605,6 +625,10 @@ function initClearButtons() {
             const decodeUriToggle = document.getElementById('decodeDataUriToggle');
             decodeUriToggle.dataset.active = 'false';
             decodeUriToggle.classList.remove('active');
+            if (decodedObjectUrl) {
+                URL.revokeObjectURL(decodedObjectUrl);
+                decodedObjectUrl = null;
+            }
             showToast('Decode section cleared!', 'success');
         });
     }
