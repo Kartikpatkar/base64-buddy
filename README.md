@@ -29,8 +29,9 @@ It’s built to be fast, intuitive, and visually consistent across devices, with
 ## 🚀 Features
 
 ### 🔹 Image & Text Encoding
-- Upload any image file (JPG, PNG, GIF, etc.) or enter text manually  
+- Upload any file (images, documents, PDFs) or enter text manually  
 - Instantly convert to Base64 format  
+- Download the generated Base64 output as a text file (`_base64.txt`)  
 - Displays real-time **file details** (name, size, type, dimensions)  
 - Responsive **image preview** with correct aspect ratio  
 - Copy Base64 output with one click  
@@ -39,11 +40,14 @@ It’s built to be fast, intuitive, and visually consistent across devices, with
 ### 🔹 Image & Text Decoding
 - Paste Base64 string or upload `.txt` files containing encoded data  
 - Auto-detects and decodes Base64 into image or text  
+- Smart **MIME type auto-detection** based on file signatures (PNG, JPEG, GIF, SVG, WebP, PDF, BMP, ICO)  
+- Plaintext **decoded preview** for textual files (JSON, HTML, XML, configurations) inside a scrollable textarea with a copy button  
 - Displays decoded **image preview and metadata**  
 - Error handling and visual toasts for invalid data  
 - Clear data option to start fresh
 
 ### 🔹 Smart UI/UX
+- Modern vector interface styled with **Google Material Symbols**  
 - Fully **mobile responsive** preview and layout  
 - Intuitive tab switching for Encode / Decode modes  
 - Real-time toast notifications for user feedback  
