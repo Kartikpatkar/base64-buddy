@@ -14,10 +14,15 @@
 
 <body>
     <div class="container">
-        <label class="theme-toggle">
-            <input type="checkbox" id="themeSwitch">
-            <span class="material-symbols-outlined" id="themeIcon">dark_mode</span>
-        </label>
+        <div class="header-actions">
+            <button id="helpButton" class="action-icon-btn" title="Keyboard Shortcuts">
+                <span class="material-symbols-outlined">help</span>
+            </button>
+            <label class="theme-toggle">
+                <input type="checkbox" id="themeSwitch">
+                <span class="material-symbols-outlined" id="themeIcon">dark_mode</span>
+            </label>
+        </div>
 
         <header class="header">
             <h1>Base64 Buddy</h1>
@@ -179,9 +184,18 @@
 
             <!-- History Section -->
             <section id="historySection" class="section">
-                <div class="actions" style="margin-bottom: 30px;">
+                <div class="actions" style="margin-bottom: 20px; display: flex; gap: 10px;">
+                    <button id="exportHistory" class="btn btn-secondary">
+                        <span class="material-symbols-outlined">download</span> Export History
+                    </button>
                     <button id="clearHistory" class="btn btn-danger">Clear History</button>
                 </div>
+
+                <!-- History Search Bar -->
+                <div class="form-group" style="margin-bottom: 20px;">
+                    <input type="text" id="historySearch" placeholder="Search history by filename or type..." style="font-family: inherit; font-size: 0.95rem; padding: 10px 14px;">
+                </div>
+
                 <div id="historyList">
                     <div class="preview-placeholder">No history items yet</div>
                 </div>
@@ -231,6 +245,44 @@
             </div>
         </div>
     </footer>
+
+    <!-- Help Modal -->
+    <div id="helpModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Keyboard Shortcuts Guide</h3>
+                <span class="close-btn material-symbols-outlined" id="closeHelpModal">close</span>
+            </div>
+            <div class="modal-body">
+                <table class="shortcuts-table">
+                    <thead>
+                        <tr>
+                            <th>Action</th>
+                            <th>Shortcut</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>Switch to Encode Tab</td>
+                            <td><kbd>Alt</kbd> + <kbd>E</kbd> (or <kbd>Option</kbd> + <kbd>E</kbd>)</td>
+                        </tr>
+                        <tr>
+                            <td>Switch to Decode Tab</td>
+                            <td><kbd>Alt</kbd> + <kbd>D</kbd> (or <kbd>Option</kbd> + <kbd>D</kbd>)</td>
+                        </tr>
+                        <tr>
+                            <td>Switch to History Tab</td>
+                            <td><kbd>Alt</kbd> + <kbd>H</kbd> (or <kbd>Option</kbd> + <kbd>H</kbd>)</td>
+                        </tr>
+                        <tr>
+                            <td>Copy Tab Output (Encode/Decode)</td>
+                            <td><kbd>Alt</kbd> + <kbd>C</kbd> (or <kbd>Option</kbd> + <kbd>C</kbd>)</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
 
     <script type="module" src="index.js"></script>
 </body>

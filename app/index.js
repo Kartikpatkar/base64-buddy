@@ -73,6 +73,44 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
     });
 
+    // History Search Event
+    const historySearch = document.getElementById('historySearch');
+    if (historySearch) {
+        historySearch.addEventListener('input', e => {
+            loadHistory(e.target.value.trim());
+        });
+    }
+
+    // Export History Event
+    const exportHistoryBtn = document.getElementById('exportHistory');
+    if (exportHistoryBtn) {
+        exportHistoryBtn.addEventListener('click', exportHistoryLogs);
+    }
+
+    // Keyboard Shortcuts Registration
+    window.addEventListener('keydown', handleKeyboardShortcuts);
+
+    // Help Modal Logic
+    const helpButton = document.getElementById('helpButton');
+    const helpModal = document.getElementById('helpModal');
+    const closeHelpModal = document.getElementById('closeHelpModal');
+
+    if (helpButton && helpModal && closeHelpModal) {
+        helpButton.addEventListener('click', () => {
+            helpModal.classList.add('show');
+        });
+
+        closeHelpModal.addEventListener('click', () => {
+            helpModal.classList.remove('show');
+        });
+
+        helpModal.addEventListener('click', (e) => {
+            if (e.target === helpModal) {
+                helpModal.classList.remove('show');
+            }
+        });
+    }
+
     document.getElementById('currentYear').textContent = new Date().getFullYear();
     initFooter();
 });
@@ -623,15 +661,25 @@ async function addToHistory(type, filename, content) {
     await loadHistory();
 }
 
-async function loadHistory() {
+async function loadHistory(query = '') {
     const list = document.getElementById('historyList');
     const { base64History = [] } = await chrome.storage.local.get('base64History');
     history = base64History;
-    if (!history.length) {
-        list.innerHTML = '<div class="preview-placeholder">No history items yet</div>';
+
+    let filteredHistory = history;
+    if (query) {
+        const lowerQuery = query.toLowerCase();
+        filteredHistory = history.filter(i => 
+            (i.filename && i.filename.toLowerCase().includes(lowerQuery)) || 
+            (i.type && i.type.toLowerCase().includes(lowerQuery))
+        );
+    }
+
+    if (!filteredHistory.length) {
+        list.innerHTML = `<div class="preview-placeholder">${query ? 'No matching history items found' : 'No history items yet'}</div>`;
         return;
     }
-    list.innerHTML = history.map(i => `
+    list.innerHTML = filteredHistory.map(i => `
         <div class="history-item">
             <div class="history-header">
                 <span class="history-type">${i.type.toUpperCase()}</span>
@@ -646,6 +694,8 @@ async function loadHistory() {
 async function clearHistory() {
     history = [];
     await chrome.storage.local.remove('base64History');
+    const historySearch = document.getElementById('historySearch');
+    if (historySearch) historySearch.value = '';
     await loadHistory();
     showToast('History cleared!', 'success');
 }
@@ -840,4 +890,68 @@ function updateEncodeStats(originalSize, b64Length) {
     }
 
     encodeStats.style.display = 'grid';
+}
+
+function handleKeyboardShortcuts(e) {
+    if (!e.altKey) return;
+    const code = e.code;
+    
+    if (code === 'KeyE') {
+        e.preventDefault();
+        const tab = document.querySelector('.tab-button[data-tab="encode"]');
+        if (tab) tab.click();
+    } else if (code === 'KeyD') {
+        e.preventDefault();
+        const tab = document.querySelector('.tab-button[data-tab="decode"]');
+        if (tab) tab.click();
+    } else if (code === 'KeyH') {
+        e.preventDefault();
+        const tab = document.querySelector('.tab-button[data-tab="history"]');
+        if (tab) tab.click();
+    } else if (code === 'KeyC') {
+        e.preventDefault();
+        const activeTab = document.querySelector('.tab-button.active');
+        if (!activeTab) return;
+
+        const tabName = activeTab.dataset.tab;
+        if (tabName === 'encode') {
+            const copyBtn = document.getElementById('copyEncoded');
+            if (copyBtn && copyBtn.style.display !== 'none') {
+                copyBtn.click();
+            } else {
+                showToast('Nothing to copy in Encode section', 'info');
+            }
+        } else if (tabName === 'decode') {
+            const copyDecodedTextBtn = document.getElementById('copyDecodedTextBtn');
+            const copyDecodedBtn = document.getElementById('copyDecoded');
+            
+            if (copyDecodedTextBtn && copyDecodedTextBtn.style.display !== 'none') {
+                copyDecodedTextBtn.click();
+            } else if (copyDecodedBtn && copyDecodedBtn.style.display !== 'none') {
+                copyDecodedBtn.click();
+            } else {
+                showToast('Nothing to copy in Decode section', 'info');
+            }
+        }
+    }
+}
+
+function exportHistoryLogs() {
+    if (!history || history.length === 0) {
+        showToast('No history items to export', 'error');
+        return;
+    }
+    try {
+        const dataStr = JSON.stringify(history, null, 2);
+        const blob = new Blob([dataStr], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'base64_buddy_history.json';
+        a.click();
+        URL.revokeObjectURL(url);
+        showToast('History logs exported!', 'success');
+    } catch (e) {
+        showToast('Export failed', 'error');
+    }
 }
