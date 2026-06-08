@@ -62,14 +62,14 @@ It’s built to be fast, intuitive, and visually consistent across devices, with
 
 ### 🔷 Light Mode
 
-![Light Mode - Encode Tab](./assets/base64-buddy-encode.png)
-![Light Mode - Encode File](./assets/base64-buddy-encode-file.png)
-![Light Mode - Decode View](./assets/base64-buddy-decode-view.png)
-![Light Mode - History View](./assets/base64-buddy-history-view.png)
+![Main Page - Light Theme](./assets/Main%20Page%20-%20Light%20Theme.png)
+![Keyboard Shortcut - Light Theme](./assets/Keyboard%20Shortcut%20-%20Light%20Theme.png)
+![History Page - Light Theme](./assets/History%20Screen%20-%20Light%20Theme.png)
+![Decode Screen - Light Theme](./assets/Decode%20Screen%20-%20Light%20Theme.png)
 
 ### 🌑 Dark Mode
 
-![Dark Mode - Encode View](./assets/base64-buddy-dark-theme-view.png)
+![Main Page - Dark Theme](./assets/Main%20Page%20-%20Dark%20Theme.png)
 
 ---
 
