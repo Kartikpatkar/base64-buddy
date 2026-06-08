@@ -1,5 +1,59 @@
 import * as CONSTANTS from '../utils/constants.js';
 import { encodeFileToBase64, decodeBase64ToBlob, detectMimeTypeFromBase64 } from '../utils/base64.js';
+
+// Polyfill chrome storage APIs for non-extension environments (e.g. previewing locally in browser)
+if (typeof chrome === 'undefined' || !chrome.storage || !chrome.storage.local) {
+    globalThis.chrome = globalThis.chrome || {};
+    globalThis.chrome.storage = {
+        local: {
+            get: async (keys) => {
+                const res = {};
+                if (typeof keys === 'string') {
+                    let val = localStorage.getItem(keys);
+                    if (val !== null) {
+                        try { val = JSON.parse(val); } catch(e) {}
+                    }
+                    return { [keys]: val };
+                }
+                const isArray = Array.isArray(keys);
+                const keysList = isArray ? keys : Object.keys(keys || {});
+                for (const k of keysList) {
+                    let val = localStorage.getItem(k);
+                    if (val !== null) {
+                        try { val = JSON.parse(val); } catch(e) {}
+                        res[k] = val;
+                    } else if (!isArray && keys && keys[k] !== undefined) {
+                        res[k] = keys[k];
+                    }
+                }
+                return res;
+            },
+            set: async (obj) => {
+                for (const k in obj) {
+                    localStorage.setItem(k, JSON.stringify(obj[k]));
+                }
+            },
+            remove: async (keys) => {
+                const list = Array.isArray(keys) ? keys : [keys];
+                for (const k of list) {
+                    localStorage.removeItem(k);
+                }
+            }
+        }
+    };
+}
+
+// HTML Escaping Utility to prevent DOM XSS and satisfy CWS review scanners
+function escapeHtml(str) {
+    if (str === null || str === undefined) return '';
+    return String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;');
+}
+
 // -------------------------------
 // State & Constants
 // -------------------------------
@@ -381,7 +435,7 @@ function showPreview(file, base64) {
         // Non-image file
         previewContent.innerHTML = `
             <div style="text-align: center; margin-bottom: 8px;"><span class="material-symbols-outlined" style="font-size: 3rem; color: #64748b;">description</span></div>
-            <div style="text-align: center;"><strong>${file.name}</strong></div>
+            <div style="text-align: center;"><strong>${escapeHtml(file.name)}</strong></div>
         `;
 
         document.getElementById('fileName').textContent = file.name;
@@ -585,14 +639,14 @@ function showDecodedPreview(base64, filename) {
                 } else {
                     previewContent.innerHTML = `
                         <div style="text-align: center; margin-bottom: 8px;"><span class="material-symbols-outlined" style="font-size: 3rem; color: #64748b;">description</span></div>
-                        <div style="text-align: center;"><strong>${filename}</strong></div>
+                        <div style="text-align: center;"><strong>${escapeHtml(filename)}</strong></div>
                         <div style="text-align: center; color: #64748b;">Binary file - Ready to download</div>
                     `;
                 }
             }).catch(() => {
                 previewContent.innerHTML = `
                     <div style="text-align: center; margin-bottom: 8px;"><span class="material-symbols-outlined" style="font-size: 3rem; color: #64748b;">description</span></div>
-                    <div style="text-align: center;"><strong>${filename}</strong></div>
+                    <div style="text-align: center;"><strong>${escapeHtml(filename)}</strong></div>
                     <div style="text-align: center; color: #64748b;">Ready to download</div>
                 `;
             });
@@ -682,11 +736,11 @@ async function loadHistory(query = '') {
     list.innerHTML = filteredHistory.map(i => `
         <div class="history-item">
             <div class="history-header">
-                <span class="history-type">${i.type.toUpperCase()}</span>
-                <span class="history-time">${i.timestamp}</span>
+                <span class="history-type">${escapeHtml(i.type.toUpperCase())}</span>
+                <span class="history-time">${escapeHtml(i.timestamp)}</span>
             </div>
-            <div style="margin-bottom:10px;font-weight:600">${i.filename}</div>
-            <div class="history-content">${i.content}</div>
+            <div style="margin-bottom:10px;font-weight:600">${escapeHtml(i.filename)}</div>
+            <div class="history-content">${escapeHtml(i.content)}</div>
         </div>
     `).join('');
 }
@@ -707,7 +761,7 @@ function showToast(message, type = 'info') {
     const container = document.querySelector('.toast-container') || createToastContainer();
     const toast = document.createElement('div');
     toast.className = `toast toast-${type}`;
-    toast.innerHTML = `<span>${message}</span>`;
+    toast.innerHTML = `<span>${escapeHtml(message)}</span>`;
     container.appendChild(toast);
 
     setTimeout(() => {

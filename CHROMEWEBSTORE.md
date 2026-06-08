@@ -50,19 +50,19 @@ English
 
 | Asset | Dimensions | Status | Filename |
 |-------|-----------|--------|----------|
-| Store Icon | 128×128 PNG | ✅ Ready | icons/icon.png |
-| Screenshot 1 | 1280×800 or 640×400 | ✅ Ready | assets/base64-buddy-encode.png |
-| Screenshot 2 | 1280×800 or 640×400 | ✅ Ready | assets/base64-buddy-encode-file.png |
-| Screenshot 3 | 1280×800 or 640×400 | ✅ Ready | assets/base64-buddy-decode-view.png |
-| Screenshot 4 | 1280×800 or 640×400 | ✅ Ready | assets/base64-buddy-history-view.png |
-| Screenshot 5 | 1280×800 or 640×400 | ✅ Ready | assets/base64-buddy-dark-theme-view.png |
+| Store Icon | 128×128 PNG | ✅ Ready | icons/icon-128.png |
+| Screenshot 1 | 1280×800 or 640×400 | ✅ Ready | assets/Main Page - Light Theme.png |
+| Screenshot 2 | 1280×800 or 640×400 | ✅ Ready | assets/Keyboard Shortcut - Light Theme.png |
+| Screenshot 3 | 1280×800 or 640×400 | ✅ Ready | assets/Decode Screen - Light Theme.png |
+| Screenshot 4 | 1280×800 or 640×400 | ✅ Ready | assets/History Screen - Light Theme.png |
+| Screenshot 5 | 1280×800 or 640×400 | ✅ Ready | assets/Main Page - Dark Theme.png |
 
 ### Screenshot Notes
-- **Screenshot 1 (Encode tab - Empty):** Shows the clean layout of the Encode tab ready for drag-and-drop.
-- **Screenshot 2 (Encode tab - Image Loaded):** Shows an image file successfully converted to Base64 with size, dimension metrics, and the preview panel.
-- **Screenshot 3 (Decode tab):** Shows Base64 input pasted, the Data URI auto-detected, and the decoded vector/image preview visible.
-- **Screenshot 4 (History tab):** Shows recent history logs stored locally with correct timestamps.
-- **Screenshot 5 (Dark Mode):** Highlights the dark theme aesthetic with active Material Symbols.
+- **Screenshot 1 (Main Page - Light Theme):** Shows the clean layout of the Encode tab ready for drag-and-drop.
+- **Screenshot 2 (Keyboard Shortcut - Light Theme):** Highlights the interactive shortcuts guide modal overlay.
+- **Screenshot 3 (Decode Screen - Light Theme):** Shows Base64 input pasted, the Data URI auto-detected, and the decoded vector/image preview visible.
+- **Screenshot 4 (History Screen - Light Theme):** Shows recent history logs stored locally with search input filtering logs dynamically.
+- **Screenshot 5 (Main Page - Dark Theme):** Highlights the dark theme aesthetic with active Material Symbols.
 
 
 ## Permissions Justification

@@ -31,3 +31,5 @@ All notable changes to this project are documented in this file.
 - **Static Toast Page-Load Shifts**: Removed redundant empty static toast markup inside `index.html` that caused empty layout flashes on initial page load.
 - **Permissions Cleanup**: Scoped manifest permissions to follow CWS Least Privilege guidelines (removed unnecessary `"tabs"` and `web_accessible_resources` configurations).
 - **Salesforce Leftovers**: Cleansed the codebase docs (`README.md`, `PRIVACY.md`, and `CONTRIBUTING.md`) of SLDS Icon Kit and Apex-generation copy-paste remnants.
+- **Font & Asset Localization**: Localized the Google Material Symbols font file (`material-symbols-outlined.ttf`) and replaced Font Awesome with lightweight inline SVGs (for brand icons) and native Material Symbols. This completely removes external CDNs and secures 100% offline functionality under Manifest V3 CSP.
+- **DOM XSS Sanitization**: Introduced an HTML escaping helper utility and secured all dynamic variable assignments via `innerHTML` (`file.name`, `filename`, `history.filename`, `history.content`, and `toast` messages) to pass security audits.
